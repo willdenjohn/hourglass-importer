@@ -1,0 +1,100 @@
+{
+  "extensionName": {
+    "message": "Importador Hourglass — Sessão"
+  },
+  "extensionDescription": {
+    "message": "Envia a sessão do Hourglass para o Importador Hourglass local quando ele precisa."
+  },
+  "titleActive": {
+    "message": "Importador Hourglass — ativa"
+  },
+  "titleInactive": {
+    "message": "Importador Hourglass — desativada"
+  },
+  "popupSubtitle": {
+    "message": "Sessão automática"
+  },
+  "hourglassInChrome": {
+    "message": "Hourglass neste Chrome"
+  },
+  "localImporter": {
+    "message": "Importador local"
+  },
+  "lastSync": {
+    "message": "Última sincronização"
+  },
+  "syncNow": {
+    "message": "Sincronizar agora"
+  },
+  "syncing": {
+    "message": "Sincronizando…"
+  },
+  "turnOff": {
+    "message": "Desativar"
+  },
+  "turnOn": {
+    "message": "Ativar"
+  },
+  "badgeActive": {
+    "message": "ATIVA"
+  },
+  "badgeInactive": {
+    "message": "DESATIVADA"
+  },
+  "popupNote": {
+    "message": "Só age quando o importador (localhost:3434) pede a sessão ou quando você clica em Sincronizar. Desativada, não lê nenhum cookie."
+  },
+  "notLoggedIn": {
+    "message": "não logado"
+  },
+  "loginExpired": {
+    "message": "login expirado"
+  },
+  "loggedIn": {
+    "message": "logado"
+  },
+  "loggedInUntil": {
+    "message": "logado até $date$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "importerClosed": {
+    "message": "não está aberto"
+  },
+  "importerConnected": {
+    "message": "conectado"
+  },
+  "importerWaiting": {
+    "message": "aguardando sessão"
+  },
+  "neverSynced": {
+    "message": "nenhuma ainda"
+  },
+  "reason_disabled": {
+    "message": "Extensão desativada."
+  },
+  "reason_importer_offline": {
+    "message": "Importador não está rodando em localhost:3434."
+  },
+  "reason_already_valid": {
+    "message": "Sessão do importador já está válida."
+  },
+  "reason_not_logged_in": {
+    "message": "Faça login no Hourglass neste Chrome."
+  },
+  "reason_expired": {
+    "message": "Login do Hourglass expirou."
+  },
+  "reason_sent": {
+    "message": "Sessão enviada ao importador."
+  },
+  "reason_rejected": {
+    "message": "Importador recusou a sessão."
+  },
+  "reason_failed": {
+    "message": "Não foi possível falar com o importador."
+  }
+}

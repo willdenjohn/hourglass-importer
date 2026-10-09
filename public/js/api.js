@@ -1,56 +1,65 @@
-let renovarSessao = null;
+import { currentLanguage, renderError } from './i18n.js';
 
-export function definirRenovacaoDeSessao(funcao) {
-  renovarSessao = funcao;
+let renewSession = null;
+
+export function setSessionRenewal(handler) {
+  renewSession = handler;
 }
 
-async function requisitar(caminho, opcoes = {}, tentativa = 1) {
-  const resposta = await fetch(caminho, opcoes);
-  const tipo = resposta.headers.get('content-type') || '';
-  const dados = tipo.includes('application/json') ? await resposta.json() : null;
-  const podeRenovar = resposta.status === 401 && caminho !== '/api/sessao' && tentativa === 1 && renovarSessao;
-  if (podeRenovar && await renovarSessao()) return requisitar(caminho, opcoes, 2);
-  if (!resposta.ok) throw new Error(dados?.erro || `Erro ${resposta.status}`);
-  return dados;
+function apiError(data, status) {
+  const code = data?.error ?? 'internal_error';
+  return Object.assign(new Error(renderError({ code, params: data?.params }) || `Error ${status}`), { code, status });
 }
 
-function json(metodo, dados) {
-  return { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) };
+function withLanguage(options = {}) {
+  return { ...options, headers: { ...(options.headers ?? {}), 'X-Language': currentLanguage() } };
 }
 
-const consulta = ({ mes, ano }) => `mes=${mes}&ano=${ano}`;
+async function request(route, options = {}, attempt = 1) {
+  const response = await fetch(route, withLanguage(options));
+  const type = response.headers.get('content-type') || '';
+  const data = type.includes('application/json') ? await response.json() : null;
+  const canRenew = response.status === 401 && route !== '/api/session' && attempt === 1 && renewSession;
+  if (canRenew && await renewSession()) return request(route, options, 2);
+  if (!response.ok) throw apiError(data, response.status);
+  return data;
+}
+
+function json(method, data) {
+  return { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+}
+
+const query = ({ month, year }) => `month=${month}&year=${year}&lang=${encodeURIComponent(currentLanguage())}`;
 
 export const api = {
-  sessao: () => requisitar('/api/sessao'),
-  salvarSessao: dados => requisitar('/api/sessao', json('POST', dados)),
-  publicadores: () => requisitar('/api/publicadores'),
-  enviarPlanilha: arquivo => requisitar('/api/planilha', { method: 'POST', body: arquivo }),
-  amostraPlanilha: (id, mapeamento) => requisitar('/api/planilha/amostra', json('POST', { id, mapeamento })),
-  preparar: (periodo, dados) => requisitar(`/api/preparar?${consulta(periodo)}`, json('POST', dados)),
-  conferencia: periodo => requisitar(`/api/conferencia?${consulta(periodo)}`),
-  salvarConferencia: (periodo, itens) => requisitar(`/api/conferencia?${consulta(periodo)}`, json('PUT', { itens })),
-  simular: (periodo, itens) => requisitar(`/api/simular?${consulta(periodo)}`, json('POST', { itens })),
-  salvarApelido: (nome, id) => requisitar('/api/apelidos', json('POST', { nome, id })),
-  faltantes: () => requisitar('/api/faltantes'),
-  urlConferenciaXlsx: periodo => `/api/conferencia.xlsx?${consulta(periodo)}`,
-  urlFaltantesXlsx: rotulo => `/api/faltantes.xlsx?mes=${rotulo}`,
+  session: () => request('/api/session'),
+  saveSession: data => request('/api/session', json('POST', data)),
+  publishers: () => request('/api/publishers'),
+  uploadSpreadsheet: file => request('/api/spreadsheet', { method: 'POST', body: file }),
+  spreadsheetSample: (id, mapping) => request('/api/spreadsheet/sample', json('POST', { id, mapping })),
+  prepare: (period, data) => request(`/api/prepare?${query(period)}`, json('POST', data)),
+  review: period => request(`/api/review?${query(period)}`),
+  saveReview: (period, items) => request(`/api/review?${query(period)}`, json('PUT', { items })),
+  simulate: (period, items) => request(`/api/simulate?${query(period)}`, json('POST', { items })),
+  saveAlias: (name, id) => request('/api/aliases', json('POST', { name, id })),
+  missing: () => request('/api/missing'),
+  reviewXlsxUrl: period => `/api/review.xlsx?${query(period)}`,
+  missingXlsxUrl: label => `/api/missing.xlsx?label=${label}&lang=${encodeURIComponent(currentLanguage())}`,
+  templateUrl: () => `/api/template.xlsx?lang=${encodeURIComponent(currentLanguage())}`,
 
-  async enviar(periodo, itens, aoEvento) {
-    const resposta = await fetch(`/api/enviar?${consulta(periodo)}`, json('POST', { itens, confirmacao: 'ENVIAR' }));
-    if (!resposta.ok) {
-      const dados = await resposta.json().catch(() => ({}));
-      throw new Error(dados.erro || `Erro ${resposta.status}`);
-    }
-    const leitor = resposta.body.getReader();
-    const decodificador = new TextDecoder();
-    let pendente = '';
+  async send(period, items, onEvent) {
+    const response = await fetch(`/api/send?${query(period)}`, withLanguage(json('POST', { items, confirmation: 'SEND' })));
+    if (!response.ok) throw apiError(await response.json().catch(() => ({})), response.status);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = '';
     for (;;) {
-      const { value, done } = await leitor.read();
+      const { value, done } = await reader.read();
       if (done) break;
-      pendente += decodificador.decode(value, { stream: true });
-      const linhas = pendente.split('\n');
-      pendente = linhas.pop();
-      linhas.filter(Boolean).forEach(linha => aoEvento(JSON.parse(linha)));
+      pending += decoder.decode(value, { stream: true });
+      const lines = pending.split('\n');
+      pending = lines.pop();
+      lines.filter(Boolean).forEach(line => onEvent(JSON.parse(line)));
     }
   },
 };

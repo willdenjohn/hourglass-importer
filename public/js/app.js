@@ -1,134 +1,160 @@
-import { api, definirRenovacaoDeSessao } from './api.js';
-import { estado, atualizar, observar } from './estado.js';
-import { formatarData, notificar } from './dom.js';
-import { montarSessao } from './componentes/sessao.js';
-import { montarImportar } from './componentes/importar.js';
-import { montarConferencia, carregarPublicadores } from './componentes/conferencia.js';
-import { montarFaltantes } from './componentes/faltantes.js';
-import { detectarExtensao, pedirSessao } from './extensao.js';
-import { montarSeletorMes } from './componentes/seletorMes.js';
+import { api, setSessionRenewal } from './api.js';
+import { state, update, observe } from './state.js';
+import { formatDate, notify, options } from './dom.js';
+import { t, LANGUAGES, setLanguage, initialLanguage, currentLanguage, translateStatic } from './i18n.js';
+import { createSessionView } from './components/session.js';
+import { createImportView } from './components/import.js';
+import { createReviewView, loadPublishers } from './components/review.js';
+import { createMissingView } from './components/missing.js';
+import { createMonthPicker } from './components/monthPicker.js';
+import { detectExtension, requestSession } from './extension.js';
 
-const abas = [...document.querySelectorAll('.aba')];
-const painel = nome => document.getElementById(`painel-${nome}`);
-const seloSessao = document.getElementById('selo-sessao');
-const subtitulo = document.getElementById('subtitulo');
-let periodoEscolhido = false;
+const tabs = [...document.querySelectorAll('.tab')];
+const panel = name => document.getElementById(`panel-${name}`);
+const sessionBadge = document.getElementById('session-badge');
+const subtitle = document.getElementById('subtitle');
+const languageSelect = document.getElementById('language-select');
+const TAB_KEYS = { ArrowRight: 1, ArrowLeft: -1, Home: 'first', End: 'last' };
+let periodChosen = false;
+let currentTab = 'session';
 
-const telas = {
-  sessao: montarSessao(painel('sessao'), conectarPelaExtensao),
-  importar: montarImportar(painel('importar'), irPara),
-  conferencia: montarConferencia(painel('conferencia'), irPara),
-  faltantes: montarFaltantes(painel('faltantes')),
+const views = {
+  session: createSessionView(panel('session'), connectThroughExtension),
+  import: createImportView(panel('import'), goTo),
+  review: createReviewView(panel('review'), goTo),
+  missing: createMissingView(panel('missing')),
 };
-let abaAtual = 'sessao';
 
-function irPara(nome) {
-  abaAtual = nome;
-  abas.forEach(aba => {
-    const ativa = aba.dataset.aba === nome;
-    aba.setAttribute('aria-selected', String(ativa));
-    aba.tabIndex = ativa ? 0 : -1;
+const monthPicker = createMonthPicker(document.getElementById('month-picker'), period => {
+  periodChosen = true;
+  update({ period, items: [], withoutAnswer: [] });
+  if (state.session?.valid) openSavedReview().then(found => found && views[currentTab].render());
+});
+
+function goTo(name) {
+  currentTab = name;
+  tabs.forEach(tab => {
+    const active = tab.dataset.tab === name;
+    tab.setAttribute('aria-selected', String(active));
+    tab.tabIndex = active ? 0 : -1;
   });
-  Object.keys(telas).forEach(chave => { painel(chave).hidden = chave !== nome; });
-  telas[nome].render();
-  if (nome === 'faltantes') telas.faltantes.carregar();
+  Object.keys(views).forEach(key => { panel(key).hidden = key !== name; });
+  views[name].render();
+  if (name === 'missing') views.missing.load();
   window.scrollTo(0, 0);
 }
 
-function atualizarSelo(sessao) {
-  if (!sessao) return;
-  const valida = sessao.valida;
-  seloSessao.className = `selo ${valida ? 'selo--sucesso' : 'selo--perigo'}`;
-  seloSessao.textContent = valida
-    ? `Hourglass conectado${sessao.expira ? ` · até ${formatarData(sessao.expira)}` : ''}`
-    : 'Hourglass desconectado';
+function renderSessionBadge(session) {
+  if (!session) return;
+  sessionBadge.className = `badge ${session.valid ? 'badge--success' : 'badge--danger'}`;
+  sessionBadge.textContent = session.valid
+    ? `${t('header.connected')}${session.expires ? ` · ${t('header.until', { date: formatDate(session.expires) })}` : ''}`
+    : t('header.disconnected');
 }
 
-function aplicarConta(conta) {
-  if (!conta) return;
-  subtitulo.textContent = ['Microsoft Forms → Hourglass', conta.congregacao.nome].filter(Boolean).join(' · ');
-  seletorMes.definirMesEmAberto(conta.mesEmAberto);
-  seletorMes.definirUltimoEnviado(conta.ultimoMesEnviado);
-  if (periodoEscolhido || !conta.mesEmAberto) return;
-  const [ano, mes] = conta.mesEmAberto.split('-').map(Number);
-  seletorMes.definir({ mes, ano });
-  atualizar({ periodo: { mes, ano } });
+function renderSubtitle() {
+  subtitle.textContent = [t('app.subtitle'), state.session?.account?.congregation?.name].filter(Boolean).join(' · ');
 }
 
-const seletorMes = montarSeletorMes(document.getElementById('seletor-mes'), periodo => {
-  periodoEscolhido = true;
-  atualizar({ periodo, itens: [], semResposta: [] });
-  if (estado.sessao?.valida) abrirConferenciaSalva().then(achou => achou && telas[abaAtual].render());
-});
-seletorMes.definir(estado.periodo);
+function applyAccount(account) {
+  renderSubtitle();
+  if (!account) return;
+  monthPicker.setOpenMonth(account.openMonth);
+  monthPicker.setLastSubmitted(account.lastSubmittedMonth);
+  if (periodChosen || !account.openMonth) return;
+  const [year, month] = account.openMonth.split('-').map(Number);
+  monthPicker.set({ month, year });
+  update({ period: { month, year } });
+}
 
-abas.forEach(aba => aba.addEventListener('click', () => irPara(aba.dataset.aba)));
-
-const TECLAS_ABA = { ArrowRight: 1, ArrowLeft: -1, Home: 'inicio', End: 'fim' };
-document.querySelector('[role="tablist"]').addEventListener('keydown', evento => {
-  const passo = TECLAS_ABA[evento.key];
-  if (passo === undefined) return;
-  evento.preventDefault();
-  const atual = abas.findIndex(aba => aba.dataset.aba === abaAtual);
-  const destino = passo === 'inicio' ? 0 : passo === 'fim' ? abas.length - 1 : (atual + passo + abas.length) % abas.length;
-  irPara(abas[destino].dataset.aba);
-  abas[destino].focus();
-});
-
-async function abrirConferenciaSalva() {
+async function openSavedReview() {
   try {
-    const { itens } = await api.conferencia(estado.periodo);
-    atualizar({ itens, semResposta: [] });
-    return itens.length > 0;
+    const { items } = await api.review(state.period);
+    update({ items, withoutAnswer: [] });
+    return items.length > 0;
   } catch {
     return false;
   }
 }
 
-observar((novo, mudou) => {
-  if ('sessao' in mudou) {
-    atualizarSelo(novo.sessao);
-    aplicarConta(novo.sessao?.conta);
-    if (novo.sessao?.valida && !novo.publicadores.length) carregarPublicadores();
-  }
-  if (['sessao', 'periodo', 'publicadores', 'extensao', 'sincronizandoExtensao', 'resultadoExtensao'].some(chave => chave in mudou)) telas[abaAtual].render();
-});
-
-async function consultarSessao() {
+async function checkSession() {
   try {
-    const sessao = await api.sessao();
-    atualizar({ sessao });
-    return sessao;
-  } catch (erro) {
-    atualizar({ sessao: { configurada: false, erro: erro.message } });
+    const session = await api.session();
+    update({ session });
+    return session;
+  } catch (error) {
+    update({ session: { configured: false, error: error.code } });
     return null;
   }
 }
 
-async function conectarPelaExtensao(forcar = false) {
-  atualizar({ sincronizandoExtensao: true });
-  const resultado = await pedirSessao({ forcar });
-  atualizar({ sincronizandoExtensao: false, resultadoExtensao: resultado });
-  if (resultado.ok) await consultarSessao();
-  return resultado;
+async function connectThroughExtension(force = false) {
+  update({ syncingExtension: true });
+  const result = await requestSession({ force });
+  update({ syncingExtension: false, extensionResult: result });
+  if (result.ok) await checkSession();
+  return result;
 }
 
-definirRenovacaoDeSessao(async () => {
-  if (estado.sincronizandoExtensao || !estado.extensao.ativa) {
-    await consultarSessao();
-    return false;
+async function changeLanguage(code) {
+  await setLanguage(code, { remember: true });
+  translateStatic();
+  renderSessionBadge(state.session);
+  renderSubtitle();
+  monthPicker.render();
+  views[currentTab].render();
+}
+
+function setupLanguageSelect() {
+  languageSelect.replaceChildren(...options(LANGUAGES.map(language => [language.code, language.name]), currentLanguage()));
+  languageSelect.addEventListener('change', () => changeLanguage(languageSelect.value));
+}
+
+function setupTabs() {
+  tabs.forEach(tab => tab.addEventListener('click', () => goTo(tab.dataset.tab)));
+  document.querySelector('[role="tablist"]').addEventListener('keydown', event => {
+    const step = TAB_KEYS[event.key];
+    if (step === undefined) return;
+    event.preventDefault();
+    const index = tabs.findIndex(tab => tab.dataset.tab === currentTab);
+    const target = step === 'first' ? 0 : step === 'last' ? tabs.length - 1 : (index + step + tabs.length) % tabs.length;
+    goTo(tabs[target].dataset.tab);
+    tabs[target].focus();
+  });
+}
+
+observe((next, changed) => {
+  if ('session' in changed) {
+    renderSessionBadge(next.session);
+    applyAccount(next.session?.account);
+    if (next.session?.valid && !next.publishers.length) loadPublishers();
   }
-  const resultado = await conectarPelaExtensao();
-  notificar(resultado.ok ? 'Sessão do Hourglass renovada pela extensão.' : resultado.mensagem, resultado.ok ? 'info' : 'erro');
-  return resultado.ok;
+  if (['session', 'period', 'publishers', 'extension', 'syncingExtension', 'extensionResult'].some(key => key in changed)) views[currentTab].render();
 });
 
-async function iniciar() {
-  irPara('sessao');
-  const [sessao] = await Promise.all([consultarSessao(), detectarExtensao()]);
-  if (!sessao?.valida && estado.extensao.ativa) await conectarPelaExtensao();
-  if (!estado.sessao?.valida) return;
-  irPara(await abrirConferenciaSalva() ? 'conferencia' : 'importar');
+setSessionRenewal(async () => {
+  if (state.syncingExtension || !state.extension.active) {
+    await checkSession();
+    return false;
+  }
+  const result = await connectThroughExtension();
+  notify(result.ok ? t('extension.renewed') : t(`extension.reason.${result.reason}`), result.ok ? 'info' : 'error');
+  return result.ok;
+});
+
+async function start() {
+  await setLanguage(initialLanguage());
+  translateStatic();
+  setupLanguageSelect();
+  setupTabs();
+  monthPicker.set(state.period);
+  renderSubtitle();
+  goTo('session');
+  const [session] = await Promise.all([checkSession(), detectExtension()]);
+  if (!session?.valid && state.extension.active) await connectThroughExtension();
+  if (!state.session?.valid) return;
+  goTo(await openSavedReview() ? 'review' : 'import');
 }
 
-iniciar();
+start();
+

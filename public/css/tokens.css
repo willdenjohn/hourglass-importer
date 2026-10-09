@@ -1,61 +1,61 @@
 :root {
-  --cor-fundo: #f5f6f8;
-  --cor-superficie: #ffffff;
-  --cor-superficie-2: #eef0f4;
-  --cor-borda: #d9dde5;
-  --cor-texto: #1d2330;
-  --cor-texto-suave: #5d6678;
-  --cor-primaria: #3b5bdb;
-  --cor-primaria-texto: #ffffff;
-  --cor-primaria-suave: #e7ecff;
-  --cor-sucesso: #2b8a3e;
-  --cor-sucesso-suave: #e6f4ea;
-  --cor-alerta: #b26a00;
-  --cor-alerta-suave: #fff4db;
-  --cor-perigo: #c92a2a;
-  --cor-perigo-suave: #fdecec;
-  --cor-neutra-suave: #eceef2;
+  --color-background: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f4;
+  --color-border: #d9dde5;
+  --color-text: #1d2330;
+  --color-text-muted: #5d6678;
+  --color-primary: #3b5bdb;
+  --color-on-primary: #ffffff;
+  --color-primary-soft: #e7ecff;
+  --color-success: #2b8a3e;
+  --color-success-soft: #e6f4ea;
+  --color-warning: #b26a00;
+  --color-warning-soft: #fff4db;
+  --color-danger: #c92a2a;
+  --color-danger-soft: #fdecec;
+  --color-neutral-soft: #eceef2;
 
-  --fonte-base: "Segoe UI", system-ui, -apple-system, sans-serif;
-  --fonte-mono: Consolas, "Cascadia Mono", monospace;
-  --texto-xs: 0.75rem;
-  --texto-sm: 0.8125rem;
-  --texto-md: 0.9375rem;
-  --texto-lg: 1.125rem;
-  --texto-xl: 1.5rem;
+  --font-base: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: Consolas, "Cascadia Mono", monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
 
-  --espaco-1: 4px;
-  --espaco-2: 8px;
-  --espaco-3: 12px;
-  --espaco-4: 16px;
-  --espaco-5: 24px;
-  --espaco-6: 32px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
 
-  --raio-sm: 6px;
-  --raio-md: 10px;
-  --sombra: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
-  --largura-maxima: 1400px;
-  --transicao: 150ms ease;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
+  --max-width: 1400px;
+  --transition: 150ms ease;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --cor-fundo: #14171d;
-    --cor-superficie: #1c2028;
-    --cor-superficie-2: #252a34;
-    --cor-borda: #343b48;
-    --cor-texto: #e6e9ef;
-    --cor-texto-suave: #9aa3b5;
-    --cor-primaria: #748ffc;
-    --cor-primaria-texto: #10131a;
-    --cor-primaria-suave: #232c4d;
-    --cor-sucesso: #69db7c;
-    --cor-sucesso-suave: #1d3324;
-    --cor-alerta: #ffc044;
-    --cor-alerta-suave: #3a3019;
-    --cor-perigo: #ff8787;
-    --cor-perigo-suave: #3d2022;
-    --cor-neutra-suave: #2a2f3a;
-    --sombra: 0 1px 3px rgb(0 0 0 / 40%);
+    --color-background: #14171d;
+    --color-surface: #1c2028;
+    --color-surface-2: #252a34;
+    --color-border: #343b48;
+    --color-text: #e6e9ef;
+    --color-text-muted: #9aa3b5;
+    --color-primary: #748ffc;
+    --color-on-primary: #10131a;
+    --color-primary-soft: #232c4d;
+    --color-success: #69db7c;
+    --color-success-soft: #1d3324;
+    --color-warning: #ffc044;
+    --color-warning-soft: #3a3019;
+    --color-danger: #ff8787;
+    --color-danger-soft: #3d2022;
+    --color-neutral-soft: #2a2f3a;
+    --shadow: 0 1px 3px rgb(0 0 0 / 40%);
   }
 }

@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <div>
+      <div class="title" data-i18n="extensionName"></div>
+      <div class="subtitle" data-i18n="popupSubtitle"></div>
+    </div>
+    <span id="badge" class="badge">…</span>
+  </header>
+
+  <section class="list" aria-live="polite">
+    <div class="item"><span data-i18n="hourglassInChrome"></span><strong id="hourglass-state">…</strong></div>
+    <div class="item"><span data-i18n="localImporter"></span><strong id="importer-state">…</strong></div>
+    <div class="item item--column"><span data-i18n="lastSync"></span><strong id="last-sync">…</strong></div>
+  </section>
+
+  <div class="actions">
+    <button id="sync-button" class="button button--primary" data-i18n="syncNow"></button>
+    <button id="toggle-button" class="button">…</button>
+  </div>
+
+  <p class="note" data-i18n="popupNote"></p>
+  <script src="popup.js"></script>
+</body>
+</html>

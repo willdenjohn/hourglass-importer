@@ -1,0 +1,100 @@
+{
+  "extensionName": {
+    "message": "Hourglass Importer — Session"
+  },
+  "extensionDescription": {
+    "message": "Sends the Hourglass session to the local Hourglass Importer when it needs it."
+  },
+  "titleActive": {
+    "message": "Hourglass Importer — on"
+  },
+  "titleInactive": {
+    "message": "Hourglass Importer — off"
+  },
+  "popupSubtitle": {
+    "message": "Automatic session"
+  },
+  "hourglassInChrome": {
+    "message": "Hourglass in this Chrome"
+  },
+  "localImporter": {
+    "message": "Local importer"
+  },
+  "lastSync": {
+    "message": "Last sync"
+  },
+  "syncNow": {
+    "message": "Sync now"
+  },
+  "syncing": {
+    "message": "Syncing…"
+  },
+  "turnOff": {
+    "message": "Turn off"
+  },
+  "turnOn": {
+    "message": "Turn on"
+  },
+  "badgeActive": {
+    "message": "ON"
+  },
+  "badgeInactive": {
+    "message": "OFF"
+  },
+  "popupNote": {
+    "message": "Acts only when the importer (localhost:3434) asks for the session or when you click Sync. When turned off, it reads no cookies."
+  },
+  "notLoggedIn": {
+    "message": "not logged in"
+  },
+  "loginExpired": {
+    "message": "login expired"
+  },
+  "loggedIn": {
+    "message": "logged in"
+  },
+  "loggedInUntil": {
+    "message": "logged in until $date$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "importerClosed": {
+    "message": "not open"
+  },
+  "importerConnected": {
+    "message": "connected"
+  },
+  "importerWaiting": {
+    "message": "waiting for session"
+  },
+  "neverSynced": {
+    "message": "not yet"
+  },
+  "reason_disabled": {
+    "message": "Extension turned off."
+  },
+  "reason_importer_offline": {
+    "message": "Importer is not running on localhost:3434."
+  },
+  "reason_already_valid": {
+    "message": "Importer session already valid."
+  },
+  "reason_not_logged_in": {
+    "message": "Log in to Hourglass in this Chrome."
+  },
+  "reason_expired": {
+    "message": "Hourglass login expired."
+  },
+  "reason_sent": {
+    "message": "Session sent to the importer."
+  },
+  "reason_rejected": {
+    "message": "Importer rejected the session."
+  },
+  "reason_failed": {
+    "message": "Could not reach the importer."
+  }
+}

@@ -1,35 +1,41 @@
-export function h(tag, atributos = {}, ...filhos) {
-  const elemento = document.createElement(tag);
-  for (const [chave, valor] of Object.entries(atributos)) {
-    if (valor === null || valor === undefined || valor === false) continue;
-    if (chave.startsWith('on')) elemento.addEventListener(chave.slice(2).toLowerCase(), valor);
-    else if (chave === 'class') elemento.className = valor;
-    else if (chave === 'dataset') Object.assign(elemento.dataset, valor);
-    else if (chave in elemento && typeof valor !== 'string') elemento[chave] = valor;
-    else elemento.setAttribute(chave, valor === true ? '' : valor);
+import { currentLocale } from './i18n.js';
+
+export function h(tag, attributes = {}, ...children) {
+  const element = document.createElement(tag);
+  for (const [key, value] of Object.entries(attributes)) {
+    if (value === null || value === undefined || value === false) continue;
+    if (key.startsWith('on')) element.addEventListener(key.slice(2).toLowerCase(), value);
+    else if (key === 'class') element.className = value;
+    else if (key === 'dataset') Object.assign(element.dataset, value);
+    else if (key in element && typeof value !== 'string') element[key] = value;
+    else element.setAttribute(key, value === true ? '' : value);
   }
-  for (const filho of filhos.flat(Infinity)) {
-    if (filho === null || filho === undefined || filho === false) continue;
-    elemento.append(filho instanceof Node ? filho : document.createTextNode(String(filho)));
+  for (const child of children.flat(Infinity)) {
+    if (child === null || child === undefined || child === false) continue;
+    element.append(child instanceof Node ? child : document.createTextNode(String(child)));
   }
-  return elemento;
+  return element;
 }
 
-export function substituir(alvo, ...filhos) {
-  alvo.replaceChildren(...filhos.flat(Infinity).filter(Boolean));
+export function replace(target, ...children) {
+  target.replaceChildren(...children.flat(Infinity).filter(Boolean));
 }
 
-export function opcoes(lista, selecionado) {
-  return lista.map(([valor, rotulo]) => h('option', { value: valor, selected: String(valor) === String(selecionado ?? '') }, rotulo));
+export function options(list, selected) {
+  return list.map(([value, label]) => h('option', { value, selected: String(value) === String(selected ?? '') }, label));
 }
 
-export function notificar(mensagem, tipo = 'info') {
-  const area = document.getElementById('notificacoes');
-  const aviso = h('div', { class: `notificacao${tipo === 'erro' ? ' notificacao--erro' : ''}`, role: 'status' }, mensagem);
-  area.append(aviso);
-  setTimeout(() => aviso.remove(), tipo === 'erro' ? 8000 : 4000);
+export function notify(message, type = 'info') {
+  const area = document.getElementById('toasts');
+  const toast = h('div', { class: `toast${type === 'error' ? ' toast--error' : ''}`, role: 'status' }, message);
+  area.append(toast);
+  setTimeout(() => toast.remove(), type === 'error' ? 8000 : 4000);
 }
 
-export function formatarData(data) {
-  return new Date(data).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+export function formatDate(date) {
+  return new Date(date).toLocaleString(currentLocale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+export function formatTime(date = new Date()) {
+  return date.toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' });
 }
