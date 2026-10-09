@@ -326,3 +326,30 @@ summary.cartao__titulo { cursor: pointer; }
 .calendario__mes--enviado.calendario__mes--selecionado { text-decoration: line-through; background: var(--cor-primaria); border-color: var(--cor-primaria); color: var(--cor-primaria-texto); }
 .calendario__risco { display: inline-block; width: 14px; height: 2px; background: var(--cor-texto-suave); }
 .calendario__rodape .calendario__legenda { display: flex; margin-bottom: var(--espaco-1); }
+
+.barra-ferramentas { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--espaco-3); margin-bottom: var(--espaco-3); }
+.barra-ferramentas .filtros { margin-bottom: 0; }
+.campo-busca { width: 240px; max-width: 100%; }
+.celula-vazia { text-align: center; padding: var(--espaco-5); }
+.texto-perigo { color: var(--cor-perigo); font-weight: 600; }
+.espaco-esquerda { margin-left: var(--espaco-2); }
+
+.alerta { display: flex; align-items: baseline; gap: var(--espaco-2); margin-bottom: var(--espaco-1); line-height: 1.35; }
+.alerta--erro { color: var(--cor-perigo); font-weight: 600; }
+.alerta--origem { font-family: var(--fonte-mono); font-size: var(--texto-xs); }
+.alerta__tipo {
+  flex: none;
+  min-width: 64px;
+  padding: 1px var(--espaco-2);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  text-align: center;
+  background: var(--cor-neutra-suave);
+  color: var(--cor-texto-suave);
+}
+.alerta__tipo--erro { background: var(--cor-perigo-suave); color: var(--cor-perigo); }
+.alerta__tipo--nome { background: var(--cor-alerta-suave); color: var(--cor-alerta); }
+.alerta__tipo--horas, .alerta__tipo--credito, .alerta__tipo--estudos { background: var(--cor-primaria-suave); color: var(--cor-primaria); }
+.alerta__tipo--cadastro { background: var(--cor-alerta-suave); color: var(--cor-alerta); }
+.alerta__tipo--envio, .alerta__tipo--ajustado { background: var(--cor-sucesso-suave); color: var(--cor-sucesso); }

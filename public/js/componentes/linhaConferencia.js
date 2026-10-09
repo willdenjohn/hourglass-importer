@@ -29,13 +29,32 @@ function seletorPublicador(item, publicadores, aoMudar) {
   return seletor(item.id, lista, valor => aoMudar(valor ? Number(valor) : ''), 'Publicador no Hourglass');
 }
 
+const CATEGORIAS_ALERTA = [
+  ['ajustado', /^ajustado/i, 'Ajustado'],
+  ['envio', /lançado|enviado pelo|já existe|duplicada/i, 'Envio'],
+  ['nome', /nome|encontrado|publicador|inativo/i, 'Nome'],
+  ['credito', /crédito/i, 'Crédito'],
+  ['horas', /hora/i, 'Horas'],
+  ['cadastro', /cadastro|pioneiro|tipo/i, 'Cadastro'],
+  ['estudos', /estudo/i, 'Estudos'],
+];
+
+function categoria(alerta) {
+  return CATEGORIAS_ALERTA.find(([, regra]) => regra.test(alerta)) ?? ['outros', null, 'Atenção'];
+}
+
+function etiquetaAlerta(alerta) {
+  const [chave, , rotulo] = categoria(alerta);
+  return h('span', { class: 'alerta' }, h('span', { class: `alerta__tipo alerta__tipo--${chave}` }, rotulo), alerta.replace(/^ajustado:\s*/i, ''));
+}
+
 function celulaAlertas(item) {
   const erros = errosDoItem(item);
   const alertas = String(item.alertas || '').split(' | ').filter(Boolean);
   return h('td', { class: 'celula-alertas' },
-    erros.map(e => h('span', { class: 'celula-alertas__item celula-alertas__item--erro' }, `✖ ${e}`)),
-    alertas.map(a => h('span', { class: 'celula-alertas__item' }, a)),
-    item.horasOriginal ? h('span', { class: 'celula-alertas__item' }, `Forms: "${item.horasOriginal}"`) : null);
+    erros.map(e => h('span', { class: 'alerta alerta--erro' }, h('span', { class: 'alerta__tipo alerta__tipo--erro' }, 'Corrigir'), e)),
+    alertas.map(etiquetaAlerta),
+    item.horasOriginal ? h('span', { class: 'alerta alerta--origem' }, `Forms: "${item.horasOriginal}"`) : null);
 }
 
 function botaoLembrar(item, aoLembrar) {

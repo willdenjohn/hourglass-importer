@@ -24,7 +24,11 @@ let abaAtual = 'sessao';
 
 function irPara(nome) {
   abaAtual = nome;
-  abas.forEach(aba => aba.setAttribute('aria-selected', String(aba.dataset.aba === nome)));
+  abas.forEach(aba => {
+    const ativa = aba.dataset.aba === nome;
+    aba.setAttribute('aria-selected', String(ativa));
+    aba.tabIndex = ativa ? 0 : -1;
+  });
   Object.keys(telas).forEach(chave => { painel(chave).hidden = chave !== nome; });
   telas[nome].render();
   if (nome === 'faltantes') telas.faltantes.carregar();
@@ -54,10 +58,32 @@ function aplicarConta(conta) {
 const seletorMes = montarSeletorMes(document.getElementById('seletor-mes'), periodo => {
   periodoEscolhido = true;
   atualizar({ periodo, itens: [], semResposta: [] });
+  if (estado.sessao?.valida) abrirConferenciaSalva().then(achou => achou && telas[abaAtual].render());
 });
 seletorMes.definir(estado.periodo);
 
 abas.forEach(aba => aba.addEventListener('click', () => irPara(aba.dataset.aba)));
+
+const TECLAS_ABA = { ArrowRight: 1, ArrowLeft: -1, Home: 'inicio', End: 'fim' };
+document.querySelector('[role="tablist"]').addEventListener('keydown', evento => {
+  const passo = TECLAS_ABA[evento.key];
+  if (passo === undefined) return;
+  evento.preventDefault();
+  const atual = abas.findIndex(aba => aba.dataset.aba === abaAtual);
+  const destino = passo === 'inicio' ? 0 : passo === 'fim' ? abas.length - 1 : (atual + passo + abas.length) % abas.length;
+  irPara(abas[destino].dataset.aba);
+  abas[destino].focus();
+});
+
+async function abrirConferenciaSalva() {
+  try {
+    const { itens } = await api.conferencia(estado.periodo);
+    atualizar({ itens, semResposta: [] });
+    return itens.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 observar((novo, mudou) => {
   if ('sessao' in mudou) {
@@ -101,7 +127,8 @@ async function iniciar() {
   irPara('sessao');
   const [sessao] = await Promise.all([consultarSessao(), detectarExtensao()]);
   if (!sessao?.valida && estado.extensao.ativa) await conectarPelaExtensao();
-  if (estado.sessao?.valida) irPara('importar');
+  if (!estado.sessao?.valida) return;
+  irPara(await abrirConferenciaSalva() ? 'conferencia' : 'importar');
 }
 
 iniciar();
