@@ -25,8 +25,8 @@ Tudo roda no seu computador. As únicas requisições externas vão para a API d
 ## Instalação
 
 ```bash
-git clone https://github.com/willdenjohn/importador-hourglass.git
-cd importador-hourglass
+git clone https://github.com/willdenjohn/hourglass-importer.git
+cd hourglass-importer
 npm install
 ```
 

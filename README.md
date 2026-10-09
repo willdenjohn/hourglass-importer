@@ -25,8 +25,8 @@ Everything runs on your own computer. The only external requests go to the Hourg
 ## Installation
 
 ```bash
-git clone https://github.com/willdenjohn/importador-hourglass.git
-cd importador-hourglass
+git clone https://github.com/willdenjohn/hourglass-importer.git
+cd hourglass-importer
 npm install
 ```
 

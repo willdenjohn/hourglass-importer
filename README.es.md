@@ -25,8 +25,8 @@ Todo se ejecuta en su propio equipo. Las únicas solicitudes externas van a la A
 ## Instalación
 
 ```bash
-git clone https://github.com/willdenjohn/importador-hourglass.git
-cd importador-hourglass
+git clone https://github.com/willdenjohn/hourglass-importer.git
+cd hourglass-importer
 npm install
 ```
 
