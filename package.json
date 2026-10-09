@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node servidor.js --abrir",
-    "importar": "node importar.js"
+    "importar": "node importar.js",
+    "test": "node --test \"testes/*.test.js\""
   },
   "engines": {
     "node": ">=20"

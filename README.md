@@ -32,7 +32,7 @@ npm install
 npm start
 ```
 
-Abra `http://localhost:3434`. No Windows, também é possível dar duplo clique em `iniciar.bat`.
+O navegador abre sozinho em `http://localhost:3434` quando o servidor está pronto. No Windows, também é possível dar duplo clique em `iniciar.bat`. Se o importador já estiver aberto, o comando apenas avisa e abre a página.
 
 1. **Sessão** — com a [extensão do Chrome](#extensão-do-chrome) instalada, a conexão é automática. Sem ela, cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão, mostra até quando o login vale e preenche os dados da conta vindos do Hourglass: usuário, congregação, mês em aberto, último mês enviado à filial, grupos e permissões. O mês em aberto passa a ser o mês padrão da importação.
 2. **Importar planilha** — escolha o mês no calendário do topo (o mês em aberto no Hourglass vem marcado com um ponto verde; meses posteriores ficam bloqueados), arraste a planilha (Forms ou modelo), confira as colunas e a prévia e clique em *Processar planilha*. Nesta etapa nada é enviado.
@@ -42,7 +42,8 @@ Abra `http://localhost:3434`. No Windows, também é possível dar duplo clique 
    - vermelho `NÃO ENCONTRADO`: escolha o publicador ou cadastre-o no Hourglass;
    - `JÁ LANÇADO` e `IGNORAR`: não serão enviados.
 
-   Edições são salvas automaticamente. Ao escolher manualmente um publicador, use *Lembrar este nome* para que o apelido seja reconhecido nos próximos meses. Clique em *Simular envio*, confira a lista e digite `ENVIAR` para confirmar.
+   Edições são salvas automaticamente (a barra inferior mostra o horário do último salvamento) e é possível navegar entre os campos com Tab. Use a busca para encontrar um nome e os filtros por situação. Os alertas aparecem como etiquetas por tipo (Nome, Horas, Crédito, Cadastro, Envio). Ao escolher manualmente um publicador, use *Lembrar este nome* para que o apelido seja reconhecido nos próximos meses. Clique em *Simular envio*, confira a lista e digite `ENVIAR` para confirmar.
+   Ao reabrir a página, a conferência do mês em aberto é carregada automaticamente.
 4. **Faltantes** — consulta o Hourglass e mostra quem ainda não entregou o relatório do mês em aberto, com totais, lista por grupo, mensagem pronta para copiar e download em Excel.
 
 ## Extensão do Chrome
@@ -64,7 +65,13 @@ A pasta `extensao/` contém uma extensão que entrega a sessão do Hourglass ao 
 
 É preciso estar logado no Hourglass neste mesmo Chrome.
 
-## Segurança
+## Segurança e integridade dos envios
+
+- Só um envio roda por vez: a interface e a linha de comando compartilham uma trava (`.envio.lock`). Uma trava abandonada há mais de 30 minutos é descartada.
+- Antes de lançar cada relatório, o importador confere no Hourglass se ele já existe; se existir, não lança de novo.
+- Chamadas ao Hourglass têm limite de 30 segundos. Consultas são repetidas uma vez em caso de instabilidade; a criação de relatório só é repetida depois de confirmar que o primeiro envio não chegou.
+- Escolher um mês que o Hourglass já enviou à filial mostra um aviso: relatórios lançados nele entram como atrasados.
+- Cada envio fica registrado em `conferencias/envios-AAAA-MM.log` (data, origem, publicador, valores e resultado).
 
 - O servidor escuta apenas em `127.0.0.1` e recusa requisições cujo `Host` não seja `localhost` ou `127.0.0.1`.
 - Gravações (`POST`/`PUT`) só são aceitas da própria página do importador ou da extensão; outros sites abertos no navegador não conseguem alterar a sessão nem os dados.
@@ -128,8 +135,17 @@ A detecção automática reconhece, entre outros, os títulos da exportação do
 | `apelidos.json` | Nomes do formulário associados a IDs do Hourglass (veja `apelidos.exemplo.json`). |
 | `conferencias/` | Conferências e relatórios de faltantes gerados por mês. |
 | `mapeamentos.json` | Formatos de planilha lembrados (títulos das colunas). |
+| `conferencias/envios-AAAA-MM.log` | Registro de cada relatório enviado, uma linha JSON por envio. |
 
 Todos contêm dados pessoais e estão no `.gitignore`.
+
+## Testes
+
+```bash
+npm test
+```
+
+Usa o executor de testes do próprio Node, sem dependências extras. Os testes usam apenas dados fictícios e um Hourglass simulado — nenhuma requisição real é feita. Cobrem interpretação de horas, crédito e estudos, detecção e mapeamento de colunas, correspondência de nomes, o fluxo completo do servidor (importar, simular, enviar, faltantes), envios simultâneos, falhas temporárias, travas, proteções do servidor, o cliente da API, a extensão e a linha de comando.
 
 ## Estrutura
 
@@ -148,6 +164,7 @@ lib/
   sessao.js            leitura e validação da sessão
 public/                interface web (HTML, CSS e JavaScript sem dependências)
 extensao/              extensão do Chrome para a sessão automática
+testes/                testes automatizados (node --test)
 ```
 
 ## API do Hourglass utilizada
@@ -182,6 +199,10 @@ Corpo enviado ao criar um relatório:
 `pioneer` aceita `"Regular"`, `"Auxiliary"`, `"Special"` ou `null`. `minutes` deve ser 0, 1, 15, 30, 45 ou múltiplo de 60.
 
 Esta API não é pública nem documentada pelo Hourglass e pode mudar sem aviso.
+
+## Licença
+
+[MIT](LICENSE).
 
 ## Aviso
 
