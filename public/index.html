@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Importador Hourglass</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo__conteudo">
+      <div>
+        <h1 class="topo__titulo">Importador de Relatórios</h1>
+        <div class="topo__subtitulo">Microsoft Forms → Hourglass</div>
+      </div>
+      <div class="topo__direita">
+        <label class="linha-acoes texto-suave">
+          Mês do relatório
+          <input id="periodo" class="entrada entrada--compacta entrada--auto" type="month">
+        </label>
+        <span id="selo-sessao" class="selo">Verificando sessão…</span>
+      </div>
+    </div>
+    <nav class="topo__conteudo abas" role="tablist">
+      <button class="aba" role="tab" data-aba="sessao" aria-selected="true">1. Sessão</button>
+      <button class="aba" role="tab" data-aba="importar">2. Importar Forms</button>
+      <button class="aba" role="tab" data-aba="conferencia">3. Conferência e envio</button>
+      <button class="aba" role="tab" data-aba="faltantes">4. Faltantes</button>
+    </nav>
+  </header>
+
+  <main class="principal">
+    <section class="painel" id="painel-sessao" role="tabpanel"></section>
+    <section class="painel" id="painel-importar" role="tabpanel" hidden></section>
+    <section class="painel" id="painel-conferencia" role="tabpanel" hidden></section>
+    <section class="painel" id="painel-faltantes" role="tabpanel" hidden></section>
+  </main>
+
+  <div class="notificacoes" id="notificacoes" aria-live="polite"></div>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

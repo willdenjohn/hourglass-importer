@@ -1,0 +1,61 @@
+:root {
+  --cor-fundo: #f5f6f8;
+  --cor-superficie: #ffffff;
+  --cor-superficie-2: #eef0f4;
+  --cor-borda: #d9dde5;
+  --cor-texto: #1d2330;
+  --cor-texto-suave: #5d6678;
+  --cor-primaria: #3b5bdb;
+  --cor-primaria-texto: #ffffff;
+  --cor-primaria-suave: #e7ecff;
+  --cor-sucesso: #2b8a3e;
+  --cor-sucesso-suave: #e6f4ea;
+  --cor-alerta: #b26a00;
+  --cor-alerta-suave: #fff4db;
+  --cor-perigo: #c92a2a;
+  --cor-perigo-suave: #fdecec;
+  --cor-neutra-suave: #eceef2;
+
+  --fonte-base: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --fonte-mono: Consolas, "Cascadia Mono", monospace;
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.8125rem;
+  --texto-md: 0.9375rem;
+  --texto-lg: 1.125rem;
+  --texto-xl: 1.5rem;
+
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 12px;
+  --espaco-4: 16px;
+  --espaco-5: 24px;
+  --espaco-6: 32px;
+
+  --raio-sm: 6px;
+  --raio-md: 10px;
+  --sombra: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
+  --largura-maxima: 1400px;
+  --transicao: 150ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cor-fundo: #14171d;
+    --cor-superficie: #1c2028;
+    --cor-superficie-2: #252a34;
+    --cor-borda: #343b48;
+    --cor-texto: #e6e9ef;
+    --cor-texto-suave: #9aa3b5;
+    --cor-primaria: #748ffc;
+    --cor-primaria-texto: #10131a;
+    --cor-primaria-suave: #232c4d;
+    --cor-sucesso: #69db7c;
+    --cor-sucesso-suave: #1d3324;
+    --cor-alerta: #ffc044;
+    --cor-alerta-suave: #3a3019;
+    --cor-perigo: #ff8787;
+    --cor-perigo-suave: #3d2022;
+    --cor-neutra-suave: #2a2f3a;
+    --sombra: 0 1px 3px rgb(0 0 0 / 40%);
+  }
+}

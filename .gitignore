@@ -1,0 +1,10 @@
+node_modules/
+sessao.json
+apelidos.json
+conferencias/
+*.xlsx
+*.xls
+*.csv
+*.log
+.claude/
+.env

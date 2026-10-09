@@ -1,0 +1,17 @@
+{
+  "name": "importador-hourglass",
+  "version": "1.0.0",
+  "description": "Importa relatórios mensais de serviço de campo de uma planilha do Microsoft Forms para o Hourglass.",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "start": "node servidor.js",
+    "importar": "node importar.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
