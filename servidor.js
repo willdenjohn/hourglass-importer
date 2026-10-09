@@ -83,8 +83,8 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
     if (!sessao) return { configurada: false };
     const expira = expiracao(sessao.hglogin);
     try {
-      const publicadores = await criarCliente(sessao).publicadores();
-      return { configurada: true, valida: true, expira, publicadores: publicadores.length };
+      const conta = await criarCliente(sessao).conta();
+      return { configurada: true, valida: true, expira, publicadores: conta.publicadores, conta };
     } catch (erro) {
       return { configurada: true, valida: false, expira, erro: erro.message };
     }
@@ -157,6 +157,7 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
       const { itens, confirmacao } = await lerJson(req);
       if (confirmacao !== 'ENVIAR') throw new ErroHttp(400, 'Confirmação ausente.');
       const api = cliente();
+      if (!(await api.conta()).permissoes.lancarRelatorios) throw new ErroHttp(403, 'Sua conta do Hourglass não tem permissão para lançar relatórios.');
       const { comErro, pendentes, jaExistentes } = await validarEnvio(api, itens, mes, ano);
       if (comErro.length) throw new ErroHttp(422, 'Há linhas com erro. Rode a simulação e corrija.');
 

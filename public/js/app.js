@@ -10,6 +10,8 @@ const abas = [...document.querySelectorAll('.aba')];
 const painel = nome => document.getElementById(`painel-${nome}`);
 const seletorPeriodo = document.getElementById('periodo');
 const seloSessao = document.getElementById('selo-sessao');
+const subtitulo = document.getElementById('subtitulo');
+let periodoEscolhido = false;
 
 const telas = {
   sessao: montarSessao(painel('sessao')),
@@ -37,6 +39,15 @@ function atualizarSelo(sessao) {
     : 'Hourglass desconectado';
 }
 
+function aplicarConta(conta) {
+  if (!conta) return;
+  subtitulo.textContent = ['Microsoft Forms → Hourglass', conta.congregacao.nome].filter(Boolean).join(' · ');
+  if (periodoEscolhido || !conta.mesEmAberto) return;
+  const [ano, mes] = conta.mesEmAberto.split('-').map(Number);
+  seletorPeriodo.value = conta.mesEmAberto;
+  atualizar({ periodo: { mes, ano } });
+}
+
 function valorPeriodo({ mes, ano }) {
   return `${ano}-${String(mes).padStart(2, '0')}`;
 }
@@ -44,6 +55,7 @@ function valorPeriodo({ mes, ano }) {
 seletorPeriodo.value = valorPeriodo(estado.periodo);
 seletorPeriodo.addEventListener('change', () => {
   const [ano, mes] = seletorPeriodo.value.split('-').map(Number);
+  periodoEscolhido = true;
   if (ano && mes) atualizar({ periodo: { mes, ano }, itens: [], semResposta: [] });
 });
 
@@ -52,6 +64,7 @@ abas.forEach(aba => aba.addEventListener('click', () => irPara(aba.dataset.aba))
 observar((novo, mudou) => {
   if ('sessao' in mudou) {
     atualizarSelo(novo.sessao);
+    aplicarConta(novo.sessao?.conta);
     if (novo.sessao?.valida && !novo.publicadores.length) carregarPublicadores();
   }
   if ('sessao' in mudou || 'periodo' in mudou || 'publicadores' in mudou) telas[abaAtual].render();

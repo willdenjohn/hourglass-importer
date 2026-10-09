@@ -100,6 +100,7 @@ export function montarConferencia(painel, irPara) {
       h('div', {},
         h('strong', {}, `${prontos.length} para enviar`),
         comErro ? h('span', { class: 'selo selo--perigo' }, `${comErro} com erro`) : null,
+        estado.sessao?.conta && !estado.sessao.conta.permissoes.lancarRelatorios ? h('div', { class: 'selo selo--perigo' }, 'Sua conta não tem permissão para lançar relatórios') : null,
         h('div', { class: 'texto-suave' }, 'Edições são salvas automaticamente na conferência do mês.')),
       h('div', { class: 'linha-acoes' },
         h('a', { class: 'botao', href: api.urlConferenciaXlsx(estado.periodo), download: true }, 'Baixar Excel'),

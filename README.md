@@ -34,7 +34,7 @@ npm start
 
 Abra `http://localhost:3434`. No Windows, também é possível dar duplo clique em `iniciar.bat`.
 
-1. **Sessão** — cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão e mostra até quando o login vale.
+1. **Sessão** — cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão, mostra até quando o login vale e preenche os dados da conta vindos do Hourglass: usuário, congregação, mês em aberto, último mês enviado à filial, grupos e permissões. O mês em aberto passa a ser o mês padrão da importação.
 2. **Importar Forms** — escolha o mês no topo, arraste o Excel do Forms e clique em *Processar*. Nesta etapa nada é enviado.
 3. **Conferência e envio** — revise as linhas:
    - verde `ENVIAR`: pronto para envio;
