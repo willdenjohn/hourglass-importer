@@ -103,6 +103,7 @@ async function changeLanguage(code) {
   renderSubtitle();
   monthPicker.render();
   views[currentTab].render();
+  if (currentTab === 'missing') views.missing.load();
 }
 
 function setupLanguageSelect() {

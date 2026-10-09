@@ -323,7 +323,7 @@
   "report.hoursWithCredit": "{hours}h +{credit}h credit",
   "report.participated": "participated",
   "report.didNotParticipate": "did not participate",
-  "report.studies": "{count} studies",
+  "report.studies": "studies: {count}",
 
   "send.confirmWord": "SEND",
   "send.typeWord": "type {word}",
