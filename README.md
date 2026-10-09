@@ -1,186 +1,188 @@
-# Importador Hourglass
+# Hourglass Importer
 
-Ferramenta local para lançar no [Hourglass](https://hourglass-app.com) os relatórios mensais de serviço de campo coletados por um formulário do Microsoft Forms, e acompanhar quem ainda não entregou.
+**English** · [Português](README.pt-BR.md) · [Español](README.es.md)
 
-Roda inteiramente no seu computador. Nada é enviado a terceiros: as únicas requisições externas vão para a API do próprio Hourglass, usando a sua sessão.
+A local tool that enters monthly field service reports into [Hourglass](https://hourglass-app.com) from a spreadsheet (a Microsoft Forms export or the provided template), and shows who has not reported yet.
 
-## Funcionalidades
+Everything runs on your own computer. The only external requests go to the Hourglass API, using your own session.
 
-- Lê o Excel exportado do Forms e identifica as colunas pelo título.
-- Associa cada resposta ao publicador cadastrado no Hourglass (nome exato, apelidos salvos ou nome parecido).
-- Interpreta horas, crédito de horas e estudos escritos em texto livre ("29 horas", "30 + 25 crédito construção", "Dois estudos").
-- Gera uma **conferência** para revisão antes de enviar, com alertas para tudo que é duvidoso.
-- Simula o envio, exige confirmação explícita e envia relatório por relatório mostrando o progresso.
-- Lista os relatórios em falta no mês, por grupo, com uma mensagem pronta para copiar no WhatsApp.
+## Features
 
-## Requisitos
+- Reads the Excel file and detects the columns by their titles, in English, Portuguese or Spanish.
+- Lets you map columns of any spreadsheet and remembers the format for next time.
+- Matches each answer to the publisher registered in Hourglass (exact name, saved nicknames or similar names).
+- Understands hours, credit hours and Bible studies written as free text ("29 hours", "30 + 25 construction credit", "two studies").
+- Builds a **review** with alerts for anything doubtful before sending.
+- Simulates the submission, asks for explicit confirmation and sends one report at a time with progress.
+- Lists missing reports for the open month by group, with a ready-to-paste message.
+- Interface, generated spreadsheets, messages and command line available in **English, Portuguese and Spanish**.
 
-- [Node.js](https://nodejs.org) 20 ou superior
-- Conta no Hourglass com permissão para lançar relatórios da congregação
+## Requirements
 
-## Instalação
+- [Node.js](https://nodejs.org) 20 or later
+- A Hourglass account allowed to enter the congregation's reports
+
+## Installation
 
 ```bash
-git clone <url-deste-repositorio>
+git clone https://github.com/willdenjohn/importador-hourglass.git
 cd importador-hourglass
 npm install
 ```
 
-## Uso pela interface
+## Using the web interface
 
 ```bash
 npm start
 ```
 
-O navegador abre sozinho em `http://localhost:3434` quando o servidor está pronto. No Windows, também é possível dar duplo clique em `iniciar.bat`. Se o importador já estiver aberto, o comando apenas avisa e abre a página.
+The browser opens at `http://localhost:3434` once the server is ready. On Windows you can also double-click `start.bat`. Pick the language in the top bar; the first time it follows your system language.
 
-1. **Sessão** — com a [extensão do Chrome](#extensão-do-chrome) instalada, a conexão é automática. Sem ela, cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão, mostra até quando o login vale e preenche os dados da conta vindos do Hourglass: usuário, congregação, mês em aberto, último mês enviado à filial, grupos e permissões. O mês em aberto passa a ser o mês padrão da importação.
-2. **Importar planilha** — escolha o mês no calendário do topo (o mês em aberto no Hourglass vem marcado com um ponto verde; meses posteriores ficam bloqueados), arraste a planilha (Forms ou modelo), confira as colunas e a prévia e clique em *Processar planilha*. Nesta etapa nada é enviado.
-3. **Conferência e envio** — revise as linhas:
-   - verde `ENVIAR`: pronto para envio;
-   - amarelo `REVISAR`: algo precisa de confirmação (veja a coluna *Alertas*);
-   - vermelho `NÃO ENCONTRADO`: escolha o publicador ou cadastre-o no Hourglass;
-   - `JÁ LANÇADO` e `IGNORAR`: não serão enviados.
+1. **Session** — with the [Chrome extension](#chrome-extension) installed, the connection is automatic. Without it, paste the Hourglass cookies `hglogin` and `X-Hourglass-XSRF-Token` (in a logged-in browser: F12 → Application → Cookies → `https://app.hourglass-app.com`). The page shows the account details read from Hourglass: user, congregation, open month, last month submitted to the branch, groups and permissions.
+2. **Import spreadsheet** — choose the month in the calendar (the open month in Hourglass has a green dot; months already submitted to the branch are struck through), drop the spreadsheet, check the detected columns and the preview, and click *Process spreadsheet*. Nothing is sent at this step.
+3. **Review and send** — check the rows:
+   - `SEND`: ready to be sent;
+   - `REVIEW`: something needs confirmation (see the *Alerts* column);
+   - `NOT FOUND`: choose the publisher or add them in Hourglass;
+   - `ALREADY SENT` and `IGNORE`: will not be sent.
 
-   Edições são salvas automaticamente (a barra inferior mostra o horário do último salvamento) e é possível navegar entre os campos com Tab. Use a busca para encontrar um nome e os filtros por situação. Os alertas aparecem como etiquetas por tipo (Nome, Horas, Crédito, Cadastro, Envio). Ao escolher manualmente um publicador, use *Lembrar este nome* para que o apelido seja reconhecido nos próximos meses. Clique em *Simular envio*, confira a lista e digite `ENVIAR` para confirmar.
-   Ao reabrir a página, a conferência do mês em aberto é carregada automaticamente.
-4. **Faltantes** — consulta o Hourglass e mostra quem ainda não entregou o relatório do mês em aberto, com totais, lista por grupo, mensagem pronta para copiar e download em Excel.
+   Changes are saved automatically and you can move between fields with Tab. Use the search box and the status filters to find rows. When you pick a publisher manually, *Remember this name* saves the nickname for future months. Click *Simulate sending*, check the list and type the confirmation word to send.
+4. **Missing reports** — reads Hourglass and shows who has not reported in the open month: totals, list by group with overseer and phone, a single message ready to copy, and an Excel download.
 
-## Extensão do Chrome
+When the page is reopened, the review of the open month is loaded automatically.
 
-A pasta `extensao/` contém uma extensão que entrega a sessão do Hourglass ao importador automaticamente, sem copiar cookies.
+## Spreadsheet
 
-**Instalação (uma vez):**
+### Template (recommended)
 
-1. Abra `chrome://extensions` e ligue o **Modo do desenvolvedor**.
-2. Clique em **Carregar sem compactação** e escolha a pasta `extensao/`.
-3. Fixe o ícone da ampulheta na barra do Chrome.
+Download it on the import screen (*Download template*) or with `node cli.js template`. Its columns follow the report fields in Hourglass and are generated in the chosen language:
 
-**Como funciona:**
+| Column | What to fill in | Required |
+|---|---|---|
+| Name | Full name as registered in Hourglass | Yes |
+| Participated in the ministry | Yes or No (publishers) | Yes, or Hours |
+| Bible studies | Number of studies conducted | No |
+| Auxiliary pioneer | Yes if they served as auxiliary pioneer this month | No |
+| Hours | Whole number (pioneers) | Yes, or Participated |
+| Credit hours | Regular pioneers only; field service + credit up to 55h | No |
+| Notes | Goes to the report remarks | No |
 
-- Só age quando a página do importador (`localhost:3434`) é aberta e a sessão está ausente ou expirada, quando uma consulta ao Hourglass falha por sessão expirada (a consulta é refeita sozinha) ou quando você clica em *Conectar pelo Chrome* / *Sincronizar agora*. Não fica monitorando nada em segundo plano.
-- Lê apenas os cookies de `app.hourglass-app.com` e envia apenas para `localhost:3434`.
-- O ícone mostra **ON** ou **OFF**. O popup mostra se o Hourglass está logado neste Chrome, se o importador está aberto e conectado, e o resultado da última sincronização.
-- O botão **Desativar** desliga a extensão: ela deixa de ler cookies até ser ativada de novo. A página do importador mostra o estado da extensão na aba *Sessão*.
+The template includes an *Instructions* sheet. Regular and continuous auxiliary pioneers are recognized from Hourglass, so there is no type column.
 
-É preciso estar logado no Hourglass neste mesmo Chrome.
+### Other spreadsheets
 
-## Segurança e integridade dos envios
+Any Excel file with a title row works. After uploading, the **Spreadsheet columns** screen shows each report field with the suggested column and sample values; adjust what is needed and check the preview before processing. *Bible studies* and *Conducted a study* accept more than one column (the first filled value counts), which covers forms with separate questions for publishers and pioneers. With *Remember this format*, the mapping is saved in `mappings.json`.
 
-- Só um envio roda por vez: a interface e a linha de comando compartilham uma trava (`.envio.lock`). Uma trava abandonada há mais de 30 minutos é descartada.
-- Antes de lançar cada relatório, o importador confere no Hourglass se ele já existe; se existir, não lança de novo.
-- Chamadas ao Hourglass têm limite de 30 segundos. Consultas são repetidas uma vez em caso de instabilidade; a criação de relatório só é repetida depois de confirmar que o primeiro envio não chegou.
-- Escolher um mês que o Hourglass já enviou à filial mostra um aviso: relatórios lançados nele entram como atrasados.
-- Cada envio fica registrado em `conferencias/envios-AAAA-MM.log` (data, origem, publicador, valores e resultado).
+## Rules applied
 
-- O servidor escuta apenas em `127.0.0.1` e recusa requisições cujo `Host` não seja `localhost` ou `127.0.0.1`.
-- Gravações (`POST`/`PUT`) só são aceitas da própria página do importador ou da extensão; outros sites abertos no navegador não conseguem alterar a sessão nem os dados.
+- **Pioneer**: taken from Hourglass (regular, continuous auxiliary, special). If the spreadsheet says otherwise, the row goes to review. A one-month auxiliary pioneer comes from the *Auxiliary pioneer* column.
+- **Publisher**: "participated" is sent as 1 minute and "did not participate" as 0, as Hourglass itself does.
+- **Hours**: whole hours only.
+- **Credit hours**: regular and special pioneers only, capped so that field service + credit does not exceed 55 hours in the month.
+- **Duplicates**: repeated answers for the same name count the last one; two rows sending to the same publisher block the submission.
+- **Already sent**: reports already in Hourglass are detected before sending and never sent again.
 
-## Uso pela linha de comando
+## Using the command line
 
 ```bash
-node importar.js preparar "Relatório de campo(SETEMBRO).xlsx" 9 2026
-node importar.js enviar conferencias/conferencia-2026-09.xlsx
-node importar.js enviar conferencias/conferencia-2026-09.xlsx --executar
-node importar.js enviar conferencias/conferencia-2026-09.xlsx --executar --limite=1
-node importar.js faltantes
-node importar.js modelo
+node cli.js prepare "Field service report(SEPTEMBER).xlsx" 9 2026
+node cli.js send reviews/review-2026-09.xlsx
+node cli.js send reviews/review-2026-09.xlsx --execute
+node cli.js send reviews/review-2026-09.xlsx --execute --limit=1
+node cli.js missing
+node cli.js template
 ```
 
-- `preparar` gera `conferencias/conferencia-AAAA-MM.xlsx`, que pode ser revisada no Excel (mude a coluna *Situação* para `ENVIAR`).
-- `enviar` sem `--executar` apenas simula. Com `--executar`, pede que você digite `ENVIAR`.
-- `--limite=N` envia só os N primeiros — útil para testar com um relatório.
-- A sessão é lida de `sessao.json` (veja `sessao.exemplo.json`).
+- Add `--lang=en`, `--lang=pt-BR` or `--lang=es` to any command; by default it follows the system language.
+- `prepare` creates `reviews/review-YYYY-MM.xlsx`, which can be edited in Excel (set the *Status* column to SEND).
+- `send` without `--execute` only simulates. With `--execute` it asks you to type the confirmation word.
+- `--limit=N` sends only the first N reports — useful for a first test.
+- The session is read from `session.json` (see `session.example.json`).
 
-## Planilha de relatórios
+## Chrome extension
 
-### Planilha modelo (recomendada)
+The `extension/` folder contains an extension that hands the Hourglass session to the importer automatically, without copying cookies.
 
-Baixe pela tela de importação (*Baixar planilha modelo*) ou gere pela linha de comando com `node importar.js modelo`. As colunas seguem os campos do relatório no Hourglass:
+**Installation (once):**
 
-| Coluna | O que preencher | Obrigatória |
-|---|---|---|
-| Nome | Nome completo como está no Hourglass | Sim |
-| Participou no ministério | Sim ou Não (publicadores) | Sim, ou Horas |
-| Estudos bíblicos | Número de estudos dirigidos | Não |
-| Pioneiro auxiliar | Sim se foi pioneiro auxiliar no mês | Não |
-| Horas | Número inteiro (pioneiros) | Sim, ou Participou |
-| Horas de crédito | Só pioneiro regular; campo + crédito até 55h | Não |
-| Observações | Vai para as observações do relatório | Não |
+1. Open `chrome://extensions` and turn on **Developer mode**.
+2. Click **Load unpacked** and choose the `extension/` folder.
+3. Pin the hourglass icon to the Chrome toolbar.
 
-O modelo traz uma aba *Instruções*. Pioneiros regulares e auxiliares contínuos são reconhecidos pelo cadastro do Hourglass, por isso não há coluna de tipo. Se o seu formulário do Forms usar exatamente esses títulos de pergunta, a exportação entra sem nenhum ajuste.
+**How it works:**
 
-### Outras planilhas (mapeamento de colunas)
+- It acts only when the importer page (`localhost:3434`) is opened and the session is missing or expired, when a Hourglass request fails because the session expired (the request is then repeated automatically), or when you click *Connect through Chrome* / *Sync now*. It does not monitor anything in the background.
+- It reads cookies only from `app.hourglass-app.com` and sends them only to `localhost:3434`.
+- The icon shows **ON** or **OFF**. The popup shows whether Hourglass is logged in on this Chrome, whether the importer is open and connected, and the result of the last sync.
+- **Turn off** disables it: no cookies are read until it is turned on again.
+- Its texts follow Chrome's language (English, Portuguese or Spanish).
 
-Qualquer Excel com uma linha de títulos funciona. Ao enviar o arquivo, a tela **Colunas da planilha** mostra cada campo do relatório com a coluna sugerida e exemplos de valores; ajuste o que for preciso e confira a prévia das primeiras linhas antes de processar. Campos como *Estudos bíblicos* e *Dirigiu estudo* aceitam mais de uma coluna (o primeiro valor preenchido vale), o que cobre formulários com perguntas separadas para publicadores e pioneiros.
+You must be logged in to Hourglass in the same Chrome.
 
-Marcando *Lembrar este formato*, o mapeamento fica salvo em `mapeamentos.json` e é aplicado automaticamente da próxima vez que uma planilha com os mesmos títulos for enviada.
+## Security and data integrity
 
-A detecção automática reconhece, entre outros, os títulos da exportação do Forms (`Escreva seu nome completo`, `Você é:`, `Você participou...`, `Dirigiu estudo...`, `Quantos estudos...`, `Digite a quantidade de horas`) e variações como `Publicador`, `Horas trabalhadas`, `Créditos`, `Estudos`, `Obs`.
+- The server listens only on `127.0.0.1` and rejects requests whose `Host` is not `localhost` or `127.0.0.1`.
+- Writes (`POST`/`PUT`) are accepted only from the importer page itself or from the extension; other websites open in the browser cannot change the session or the data.
+- Only one submission runs at a time: the interface and the command line share a lock (`.send.lock`). A lock abandoned for more than 30 minutes is discarded.
+- Before entering each report, the importer checks in Hourglass whether it already exists; if it does, it is not sent again.
+- Requests to Hourglass time out after 30 seconds. Reads are retried once on instability; creating a report is only retried after confirming the first attempt did not arrive.
+- Picking a month that Hourglass already submitted to the branch shows a warning: reports entered for it count as late.
+- Every submission is logged in `reviews/submissions-YYYY-MM.log` (time, origin, publisher, values and result).
 
-## Regras aplicadas
+## Local files (not versioned)
 
-- **Pioneiro**: definido pelo cadastro no Hourglass (regular, auxiliar contínuo, especial). Se o Forms disser outra coisa, a linha vai para revisão. Um pioneiro auxiliar do mês pode ser ajustado na conferência.
-- **Publicador**: "participou" é enviado como 1 minuto e "não participou" como 0, como o próprio Hourglass faz.
-- **Horas**: apenas horas inteiras.
-- **Crédito de horas**: só para pioneiros regulares e especiais, limitado para que campo + crédito não passe de 55 horas no mês.
-- **Duplicidade**: respostas repetidas do mesmo nome valem pela última; duas linhas enviando para o mesmo publicador bloqueiam o envio.
-- **Já lançado**: quem já tem relatório no mês é detectado antes de enviar e nunca é enviado de novo.
-
-## Arquivos locais (não versionados)
-
-| Arquivo | Conteúdo |
+| File | Content |
 |---|---|
-| `sessao.json` | Cookies de sessão do Hourglass. Dá acesso à sua conta — não compartilhe. |
-| `apelidos.json` | Nomes do formulário associados a IDs do Hourglass (veja `apelidos.exemplo.json`). |
-| `conferencias/` | Conferências e relatórios de faltantes gerados por mês. |
-| `mapeamentos.json` | Formatos de planilha lembrados (títulos das colunas). |
-| `conferencias/envios-AAAA-MM.log` | Registro de cada relatório enviado, uma linha JSON por envio. |
+| `session.json` | Hourglass session cookies. Gives access to your account — do not share it. |
+| `aliases.json` | Names from the form linked to Hourglass IDs (see `aliases.example.json`). |
+| `mappings.json` | Remembered spreadsheet formats (column titles). |
+| `reviews/` | Reviews, missing report spreadsheets and submission logs per month. |
 
-Todos contêm dados pessoais e estão no `.gitignore`.
+All of them contain personal data and are listed in `.gitignore`.
 
-## Testes
+**Upgrading from version 1:** files created by version 1 (`sessao.json`, `apelidos.json`, `mapeamentos.json`, `conferencias/`) are renamed automatically on the first run, and old reviews in Portuguese keep opening. Reload the Chrome extension from the new `extension/` folder.
 
-```bash
-npm test
-```
-
-Usa o executor de testes do próprio Node, sem dependências extras. Os testes usam apenas dados fictícios e um Hourglass simulado — nenhuma requisição real é feita. Cobrem interpretação de horas, crédito e estudos, detecção e mapeamento de colunas, correspondência de nomes, o fluxo completo do servidor (importar, simular, enviar, faltantes), envios simultâneos, falhas temporárias, travas, proteções do servidor, o cliente da API, a extensão e a linha de comando.
-
-## Estrutura
+## Project structure
 
 ```
-importar.js            linha de comando
-servidor.js            servidor da interface (http://localhost:3434)
+cli.js                 command line
+server.js              web interface server (http://localhost:3434)
+start.bat              Windows launcher
+locales/               translations shared by server, command line and interface (en, pt-BR, es)
 lib/
-  api.js               cliente da API do Hourglass
-  formulario.js        leitura da planilha, detecção e mapeamento de colunas
-  modelo.js            planilha modelo
-  interpretar.js       horas, crédito, estudos e tipo de pioneiro
-  correspondencia.js   associação de nomes a publicadores
-  conferencia.js       planilha de conferência e montagem do relatório
-  servico.js           fluxo compartilhado entre CLI e interface
-  faltantes.js         relatório de faltantes e mensagem
-  sessao.js            leitura e validação da sessão
-public/                interface web (HTML, CSS e JavaScript sem dependências)
-extensao/              extensão do Chrome para a sessão automática
-testes/                testes automatizados (node --test)
+  api.js               Hourglass API client
+  spreadsheet.js       spreadsheet reading, column detection and mapping
+  template.js          template spreadsheet
+  interpret.js         hours, credit, studies and pioneer type
+  matching.js          matching names to publishers
+  review.js            review spreadsheet and report payload
+  service.js           workflow shared by command line and interface
+  missing.js           missing reports and share message
+  session.js           session storage and validation
+  alerts.js            rendering of alert and error codes
+  i18n.js              translation loading
+  migration.js         upgrade of version 1 local files
+  text.js              text helpers
+public/                web interface (HTML, CSS and JavaScript with no dependencies)
+extension/             Chrome extension for the automatic session
+tests/                 automated tests (node --test)
 ```
 
-## API do Hourglass utilizada
+## Hourglass API used
 
-Base: `https://app.hourglass-app.com/api/v0.2`. Toda requisição envia os cookies de sessão e o cabeçalho `X-Hourglass-XSRF-Token`.
+Base: `https://app.hourglass-app.com/api/v0.2`. Every request sends the session cookies and the `X-Hourglass-XSRF-Token` header.
 
-| Método | Rota | Uso |
+| Method | Route | Use |
 |---|---|---|
-| GET | `fsreport/startup` | Publicadores ativos e grupos de campo |
-| GET | `fsreport/users/notpublishing` | Publicadores inativos |
-| GET | `fsreport/summary/monthdetail/{ano}/{mes}` | Relatórios já lançados no mês |
-| POST | `fsreport/reports/{idPublicador}` | Cria o relatório |
-| GET | `fsreport/summary/missing` | Relatórios em falta |
-| GET | `fsreport/summary/monthreporttotals` | Totais do mês em aberto |
+| GET | `fsreport/startup` | Account, publishers and field service groups |
+| GET | `fsreport/users/notpublishing` | Inactive publishers |
+| GET | `fsreport/summary/monthdetail/{year}/{month}` | Reports already entered in the month |
+| GET | `fsreport/reports/{publisherId}` | Reports of one publisher (checked before each submission) |
+| POST | `fsreport/reports/{publisherId}` | Creates the report |
+| GET | `fsreport/summary/missing` | Missing reports |
+| GET | `fsreport/summary/monthreporttotals` | Totals of the open month |
 
-Corpo enviado ao criar um relatório:
+Body sent when creating a report:
 
 ```json
 {
@@ -196,14 +198,29 @@ Corpo enviado ao criar um relatório:
 }
 ```
 
-`pioneer` aceita `"Regular"`, `"Auxiliary"`, `"Special"` ou `null`. `minutes` deve ser 0, 1, 15, 30, 45 ou múltiplo de 60.
+`pioneer` accepts `"Regular"`, `"Auxiliary"`, `"Special"` or `null`. `minutes` must be 0, 1, 15, 30, 45 or a multiple of 60.
 
-Esta API não é pública nem documentada pelo Hourglass e pode mudar sem aviso.
+This API is not public or documented by Hourglass and may change without notice.
 
-## Licença
+## Tests
+
+```bash
+npm test
+```
+
+Uses Node's built-in test runner, with no extra dependencies. The tests use only fictional data and a simulated Hourglass — no real request is made.
+
+## Contributing
+
+- **Language:** code, identifiers, file names and commit messages are in English. User-facing text lives in `locales/*.json`; add a key to all three files (a test checks that they have the same keys and placeholders). Extension texts live in `extension/_locales/*/messages.json`.
+- **Commits:** follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`), short imperative subject in English.
+- **No real data:** never commit names, phone numbers, congregation details, Hourglass IDs, cookies or spreadsheets. Tests and examples use fictional data only.
+- **Before opening a pull request:** run `npm test`.
+
+## License
 
 [MIT](LICENSE).
 
-## Aviso
+## Disclaimer
 
-Projeto independente, sem vínculo com o Hourglass. Use por sua conta e confira os relatórios no Hourglass após o envio.
+Independent project, not affiliated with Hourglass. Use it at your own risk and check the reports in Hourglass after sending.
