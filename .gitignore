@@ -8,3 +8,4 @@ conferencias/
 *.log
 .claude/
 .env
+mapeamentos.json

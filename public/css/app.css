@@ -315,3 +315,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 640px) {
   .calendario__painel { left: 0; right: auto; }
 }
+
+.espaco-topo { margin-top: var(--espaco-4); }
+.botao-remover { border: 0; background: none; color: inherit; cursor: pointer; font-weight: 700; padding: 0 0 0 var(--espaco-1); }
+#tabela-mapeamento td:first-child { min-width: 200px; }
+#tabela-mapeamento select.entrada { max-width: 360px; }
+summary.cartao__titulo { cursor: pointer; }

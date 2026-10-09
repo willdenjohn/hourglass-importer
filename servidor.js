@@ -3,7 +3,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { lerFormulario } = require('./lib/formulario');
+const formulario = require('./lib/formulario');
+const { gerarModelo } = require('./lib/modelo');
 const { nomeCompleto } = require('./lib/correspondencia');
 const { criarCliente: criarClienteReal } = require('./lib/api');
 const { escreverConferencia, lerConferencia } = require('./lib/conferencia');
@@ -15,6 +16,8 @@ const PORTA = Number(process.env.PORTA) || 3434;
 const PASTA_PUBLICA = path.join(__dirname, 'public');
 const TIPOS = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };
 const TIPO_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const MAXIMO_PLANILHAS = 5;
+const EXEMPLOS_POR_COLUNA = 3;
 
 class ErroHttp extends Error {
   constructor(status, mensagem) {
@@ -76,12 +79,37 @@ function periodo(url) {
   return { mes, ano };
 }
 
+function exemplosDasColunas({ titulos, linhas }) {
+  return titulos.map((_, indice) => [...new Set(linhas.map(l => l[indice]).filter(v => v !== null && String(v).trim() !== '').map(String))].slice(0, EXEMPLOS_POR_COLUNA));
+}
+
+function normalizarMapeamento(mapeamento, totalColunas) {
+  return Object.fromEntries(formulario.CAMPOS.map(({ chave }) => {
+    const indices = [mapeamento?.[chave] ?? []].flat().map(Number).filter(i => Number.isInteger(i) && i >= 0 && i < totalColunas);
+    return [chave, [...new Set(indices)]];
+  }));
+}
+
 function resumoPublicador(p) {
   return { id: p.id, nome: nomeCompleto(p), status: p.status, grupo: p.group_id };
 }
 
 function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } = {}) {
   const arquivos = caminhos(pasta);
+  const planilhas = new Map();
+
+  function guardarPlanilha(planilha) {
+    const id = Math.random().toString(36).slice(2, 10);
+    planilhas.set(id, planilha);
+    if (planilhas.size > MAXIMO_PLANILHAS) planilhas.delete(planilhas.keys().next().value);
+    return id;
+  }
+
+  function planilhaGuardada(id) {
+    const planilha = planilhas.get(id);
+    if (!planilha) throw new ErroHttp(404, 'Planilha não encontrada. Envie o arquivo novamente.');
+    return planilha;
+  }
 
   function cliente() {
     const sessao = carregarSessao(pasta);
@@ -117,9 +145,50 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
       responderJson(res, publicadores.map(resumoPublicador).sort((a, b) => a.nome.localeCompare(b.nome)));
     },
 
+    'GET /api/modelo.xlsx': async (req, res) => {
+      res.writeHead(200, { 'Content-Type': TIPO_XLSX, 'Content-Disposition': 'attachment; filename="modelo-relatorios.xlsx"' });
+      res.end(gerarModelo());
+    },
+
+    'POST /api/planilha': async (req, res) => {
+      let planilha;
+      try {
+        planilha = formulario.abrirPlanilha(await lerCorpo(req));
+      } catch {
+        throw new ErroHttp(400, 'Não consegui ler o arquivo. Envie um Excel (.xlsx).');
+      }
+      if (!planilha.titulos.length || !planilha.linhas.length) throw new ErroHttp(400, 'A planilha está vazia ou sem linha de títulos.');
+      const lembrado = formulario.mapeamentoLembrado(arquivos.mapeamentos, planilha.titulos);
+      const mapeamento = lembrado ?? formulario.sugerirMapeamento(planilha.titulos);
+      responderJson(res, {
+        id: guardarPlanilha(planilha),
+        campos: formulario.CAMPOS,
+        titulos: planilha.titulos,
+        exemplos: exemplosDasColunas(planilha),
+        totalLinhas: planilha.linhas.length,
+        lembrado: Boolean(lembrado),
+        mapeamento,
+        faltando: formulario.validarMapeamento(mapeamento),
+        amostra: formulario.amostra(planilha, mapeamento),
+      });
+    },
+
+    'POST /api/planilha/amostra': async (req, res) => {
+      const { id, mapeamento } = await lerJson(req);
+      const planilha = planilhaGuardada(id);
+      const normalizado = normalizarMapeamento(mapeamento, planilha.titulos.length);
+      responderJson(res, { faltando: formulario.validarMapeamento(normalizado), amostra: formulario.amostra(planilha, normalizado) });
+    },
+
     'POST /api/preparar': async (req, res, url) => {
       const { mes, ano } = periodo(url);
-      const respostas = lerFormulario(await lerCorpo(req));
+      const { id, mapeamento, lembrar } = await lerJson(req);
+      const planilha = planilhaGuardada(id);
+      const normalizado = normalizarMapeamento(mapeamento, planilha.titulos.length);
+      const faltando = formulario.validarMapeamento(normalizado);
+      if (faltando.length) throw new ErroHttp(422, `Mapeie as colunas: ${faltando.join(', ')}.`);
+      if (lembrar) formulario.lembrarMapeamento(arquivos.mapeamentos, planilha.titulos, normalizado);
+      const respostas = formulario.lerRespostas(planilha, normalizado);
       const resultado = await prepararConferencia(cliente(), respostas, mes, ano, arquivos.apelidos);
       fs.mkdirSync(arquivos.conferencias, { recursive: true });
       escreverConferencia(arquivos.conferencia(mes, ano), resultado.itens);

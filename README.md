@@ -35,7 +35,7 @@ npm start
 Abra `http://localhost:3434`. No Windows, também é possível dar duplo clique em `iniciar.bat`.
 
 1. **Sessão** — com a [extensão do Chrome](#extensão-do-chrome) instalada, a conexão é automática. Sem ela, cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão, mostra até quando o login vale e preenche os dados da conta vindos do Hourglass: usuário, congregação, mês em aberto, último mês enviado à filial, grupos e permissões. O mês em aberto passa a ser o mês padrão da importação.
-2. **Importar Forms** — escolha o mês no calendário do topo (o mês em aberto no Hourglass vem marcado com um ponto verde; meses posteriores ficam bloqueados), arraste o Excel do Forms e clique em *Processar*. Nesta etapa nada é enviado.
+2. **Importar planilha** — escolha o mês no calendário do topo (o mês em aberto no Hourglass vem marcado com um ponto verde; meses posteriores ficam bloqueados), arraste a planilha (Forms ou modelo), confira as colunas e a prévia e clique em *Processar planilha*. Nesta etapa nada é enviado.
 3. **Conferência e envio** — revise as linhas:
    - verde `ENVIAR`: pronto para envio;
    - amarelo `REVISAR`: algo precisa de confirmação (veja a coluna *Alertas*);
@@ -77,6 +77,7 @@ node importar.js enviar conferencias/conferencia-2026-09.xlsx
 node importar.js enviar conferencias/conferencia-2026-09.xlsx --executar
 node importar.js enviar conferencias/conferencia-2026-09.xlsx --executar --limite=1
 node importar.js faltantes
+node importar.js modelo
 ```
 
 - `preparar` gera `conferencias/conferencia-AAAA-MM.xlsx`, que pode ser revisada no Excel (mude a coluna *Situação* para `ENVIAR`).
@@ -84,24 +85,31 @@ node importar.js faltantes
 - `--limite=N` envia só os N primeiros — útil para testar com um relatório.
 - A sessão é lida de `sessao.json` (veja `sessao.exemplo.json`).
 
-## Formato esperado do Forms
+## Planilha de relatórios
 
-O importador procura as colunas pelo título (maiúsculas e acentos são ignorados):
+### Planilha modelo (recomendada)
 
-| Conteúdo | Título deve conter |
-|---|---|
-| Nome do publicador | `nome completo` |
-| Tipo (Publicador, Pioneiro(a) Regular, Pioneiro(a) Auxiliar) | `Você é:` |
-| Participou no ministério (Sim/Não) | `participou` |
-| Dirigiu estudo (Sim/Não) | `dirigiu` |
-| Quantidade de estudos | `quantos estudos` |
-| Horas | `quantidade de horas` |
-| Crédito de horas (opcional, recomendado) | `crédito`, `LDC` ou `construção` |
-| Observações (opcional) | `observa` |
+Baixe pela tela de importação (*Baixar planilha modelo*) ou gere pela linha de comando com `node importar.js modelo`. As colunas seguem os campos do relatório no Hourglass:
 
-Funciona tanto com a exportação completa do Forms (com colunas de ID, horários e e-mail) quanto com uma planilha só com as perguntas.
+| Coluna | O que preencher | Obrigatória |
+|---|---|---|
+| Nome | Nome completo como está no Hourglass | Sim |
+| Participou no ministério | Sim ou Não (publicadores) | Sim, ou Horas |
+| Estudos bíblicos | Número de estudos dirigidos | Não |
+| Pioneiro auxiliar | Sim se foi pioneiro auxiliar no mês | Não |
+| Horas | Número inteiro (pioneiros) | Sim, ou Participou |
+| Horas de crédito | Só pioneiro regular; campo + crédito até 55h | Não |
+| Observações | Vai para as observações do relatório | Não |
 
-**Recomendações para o formulário:** use campos numéricos para horas e estudos e um campo separado para crédito de horas. Isso elimina a maior parte dos alertas.
+O modelo traz uma aba *Instruções*. Pioneiros regulares e auxiliares contínuos são reconhecidos pelo cadastro do Hourglass, por isso não há coluna de tipo. Se o seu formulário do Forms usar exatamente esses títulos de pergunta, a exportação entra sem nenhum ajuste.
+
+### Outras planilhas (mapeamento de colunas)
+
+Qualquer Excel com uma linha de títulos funciona. Ao enviar o arquivo, a tela **Colunas da planilha** mostra cada campo do relatório com a coluna sugerida e exemplos de valores; ajuste o que for preciso e confira a prévia das primeiras linhas antes de processar. Campos como *Estudos bíblicos* e *Dirigiu estudo* aceitam mais de uma coluna (o primeiro valor preenchido vale), o que cobre formulários com perguntas separadas para publicadores e pioneiros.
+
+Marcando *Lembrar este formato*, o mapeamento fica salvo em `mapeamentos.json` e é aplicado automaticamente da próxima vez que uma planilha com os mesmos títulos for enviada.
+
+A detecção automática reconhece, entre outros, os títulos da exportação do Forms (`Escreva seu nome completo`, `Você é:`, `Você participou...`, `Dirigiu estudo...`, `Quantos estudos...`, `Digite a quantidade de horas`) e variações como `Publicador`, `Horas trabalhadas`, `Créditos`, `Estudos`, `Obs`.
 
 ## Regras aplicadas
 
@@ -119,6 +127,7 @@ Funciona tanto com a exportação completa do Forms (com colunas de ID, horário
 | `sessao.json` | Cookies de sessão do Hourglass. Dá acesso à sua conta — não compartilhe. |
 | `apelidos.json` | Nomes do formulário associados a IDs do Hourglass (veja `apelidos.exemplo.json`). |
 | `conferencias/` | Conferências e relatórios de faltantes gerados por mês. |
+| `mapeamentos.json` | Formatos de planilha lembrados (títulos das colunas). |
 
 Todos contêm dados pessoais e estão no `.gitignore`.
 
@@ -129,7 +138,8 @@ importar.js            linha de comando
 servidor.js            servidor da interface (http://localhost:3434)
 lib/
   api.js               cliente da API do Hourglass
-  formulario.js        leitura do Excel do Forms
+  formulario.js        leitura da planilha, detecção e mapeamento de colunas
+  modelo.js            planilha modelo
   interpretar.js       horas, crédito, estudos e tipo de pioneiro
   correspondencia.js   associação de nomes a publicadores
   conferencia.js       planilha de conferência e montagem do relatório

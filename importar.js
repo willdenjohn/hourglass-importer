@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const { lerFormulario } = require('./lib/formulario');
+const { gerarModelo } = require('./lib/modelo');
 const { nomeCompleto } = require('./lib/correspondencia');
 const { criarCliente } = require('./lib/api');
 const { escreverConferencia, lerConferencia } = require('./lib/conferencia');
@@ -30,6 +31,9 @@ Uso:
       Relatório de quem ainda não entregou no mês em aberto (gera conferencias/faltantes-AAAA-MM.xlsx).
       Também roda automaticamente ao final do envio.
 
+  node importar.js modelo
+      Gera modelo-relatorios.xlsx com as colunas esperadas e uma aba de instruções.
+
 Sessão: sessao.json nesta pasta com {"hglogin": "...", "xsrf": "..."}.
 Interface visual: node servidor.js (ou iniciar.bat).
 `;
@@ -46,7 +50,7 @@ function clienteDaSessao() {
 }
 
 async function preparar(arquivo, mes, ano) {
-  const respostas = lerFormulario(arquivo);
+  const respostas = lerFormulario(arquivo, ARQUIVOS.mapeamentos);
   console.log(`\nFormulário: ${respostas.length} respostas — ${String(mes).padStart(2, '0')}/${ano}`);
   const { itens, semResposta, publicadores, totalLancados } = await prepararConferencia(clienteDaSessao(), respostas, mes, ano, ARQUIVOS.apelidos);
   console.log(`Hourglass: ${publicadores.length} publicadores ativos, ${totalLancados} relatórios já lançados no mês.`);
@@ -117,6 +121,10 @@ async function main() {
     return enviar(argumentos[0], resto.includes('--executar'), limite);
   }
   if (comando === 'faltantes') return relatorioFaltantes(clienteDaSessao());
+  if (comando === 'modelo') {
+    fs.writeFileSync('modelo-relatorios.xlsx', gerarModelo());
+    return console.log('Modelo gerado: modelo-relatorios.xlsx');
+  }
   console.log(USO);
   process.exitCode = 1;
 }
