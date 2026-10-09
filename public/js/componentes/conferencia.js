@@ -5,6 +5,7 @@ import { errosDoItem } from '../validacao.js';
 import { linhaConferencia } from './linhaConferencia.js';
 import { mostrarSimulacao, mostrarProgresso } from './dialogoEnvio.js';
 import { rotuloPeriodo } from './importar.js';
+import { avisoMesEnviado } from './avisoMes.js';
 
 const CABECALHO = ['Situação', 'Linha', 'No Forms', 'No Hourglass', 'Participou', 'Horas', 'Crédito', 'Estudos', 'Pioneiro', 'Alertas'];
 const ATRASO_SALVAR = 800;
@@ -126,7 +127,8 @@ export function montarConferencia(painel, irPara) {
     substituir(painel,
       h('div', { class: 'cartao' },
         h('h2', { class: 'cartao__titulo' }, `Conferência de ${rotuloPeriodo(estado.periodo)}`),
-        h('p', { class: 'texto-suave' }, 'Confira as linhas em amarelo e vermelho, ajuste os valores e mude a situação para ENVIAR. Só linhas ENVIAR são enviadas.')),
+        h('p', { class: 'texto-suave' }, 'Confira as linhas em amarelo e vermelho, ajuste os valores e mude a situação para ENVIAR. Só linhas ENVIAR são enviadas.'),
+        avisoMesEnviado()),
       semResposta(),
       barraFiltros(),
       tabela(),

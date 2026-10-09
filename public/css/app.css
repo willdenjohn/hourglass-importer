@@ -321,3 +321,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 #tabela-mapeamento td:first-child { min-width: 200px; }
 #tabela-mapeamento select.entrada { max-width: 360px; }
 summary.cartao__titulo { cursor: pointer; }
+
+.calendario__mes--enviado { text-decoration: line-through; color: var(--cor-texto-suave); background: var(--cor-neutra-suave); }
+.calendario__mes--enviado.calendario__mes--selecionado { text-decoration: line-through; background: var(--cor-primaria); border-color: var(--cor-primaria); color: var(--cor-primaria-texto); }
+.calendario__risco { display: inline-block; width: 14px; height: 2px; background: var(--cor-texto-suave); }
+.calendario__rodape .calendario__legenda { display: flex; margin-bottom: var(--espaco-1); }

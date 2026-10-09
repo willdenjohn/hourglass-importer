@@ -44,6 +44,7 @@ function aplicarConta(conta) {
   if (!conta) return;
   subtitulo.textContent = ['Microsoft Forms → Hourglass', conta.congregacao.nome].filter(Boolean).join(' · ');
   seletorMes.definirMesEmAberto(conta.mesEmAberto);
+  seletorMes.definirUltimoEnviado(conta.ultimoMesEnviado);
   if (periodoEscolhido || !conta.mesEmAberto) return;
   const [ano, mes] = conta.mesEmAberto.split('-').map(Number);
   seletorMes.definir({ mes, ano });

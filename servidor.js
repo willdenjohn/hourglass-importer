@@ -10,7 +10,7 @@ const { criarCliente: criarClienteReal } = require('./lib/api');
 const { escreverConferencia, lerConferencia } = require('./lib/conferencia');
 const { carregarSessao, salvarSessao, normalizarSessao, sessaoPreenchida, expiracao } = require('./lib/sessao');
 const { levantarFaltantes, salvarFaltantes, mensagemGeral } = require('./lib/faltantes');
-const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, salvarApelido, marcarEnviados } = require('./lib/servico');
+const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, salvarApelido, marcarEnviados, comTrava } = require('./lib/servico');
 
 const PORTA = Number(process.env.PORTA) || 3434;
 const PASTA_PUBLICA = path.join(__dirname, 'public');
@@ -238,17 +238,24 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
       if (confirmacao !== 'ENVIAR') throw new ErroHttp(400, 'Confirmação ausente.');
       const api = cliente();
       if (!(await api.conta()).permissoes.lancarRelatorios) throw new ErroHttp(403, 'Sua conta do Hourglass não tem permissão para lançar relatórios.');
-      const { comErro, pendentes, jaExistentes } = await validarEnvio(api, itens, mes, ano);
-      if (comErro.length) throw new ErroHttp(422, 'Há linhas com erro. Rode a simulação e corrija.');
+      await comTrava(pasta, async () => {
+        const { comErro, pendentes, jaExistentes } = await validarEnvio(api, itens, mes, ano);
+        if (comErro.length) throw new ErroHttp(422, 'Há linhas com erro. Rode a simulação e corrija.');
 
-      res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
-      const escrever = dados => res.write(JSON.stringify(dados) + '\n');
-      escrever({ tipo: 'inicio', total: pendentes.length });
-      const resultados = await enviarRelatorios(api, pendentes, (resultado, feitos, total) => escrever({ tipo: 'progresso', feitos, total, ...resultado }));
-      const jaNoHourglass = jaExistentes.map(p => ({ id: p.relatorio.user.id, ok: true }));
-      escreverConferencia(arquivos.conferencia(mes, ano), marcarEnviados(itens, [...resultados, ...jaNoHourglass]));
-      escrever({ tipo: 'fim', enviados: resultados.filter(r => r.ok).length, falhas: resultados.filter(r => !r.ok).length });
-      res.end();
+        res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
+        const escrever = dados => res.write(JSON.stringify(dados) + '\n');
+        escrever({ tipo: 'inicio', total: pendentes.length });
+        const resultados = await enviarRelatorios(api, pendentes, (resultado, feitos, total) => escrever({ tipo: 'progresso', feitos, total, ...resultado }));
+        const jaNoHourglass = jaExistentes.map(p => ({ id: p.relatorio.user.id, ok: true }));
+        escreverConferencia(arquivos.conferencia(mes, ano), marcarEnviados(itens, [...resultados, ...jaNoHourglass]));
+        escrever({
+          tipo: 'fim',
+          enviados: resultados.filter(r => r.ok && !r.jaExistia).length,
+          jaExistiam: resultados.filter(r => r.jaExistia).length,
+          falhas: resultados.filter(r => !r.ok).length,
+        });
+        res.end();
+      });
     },
 
     'POST /api/apelidos': async (req, res) => {

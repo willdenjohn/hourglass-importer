@@ -2,6 +2,7 @@ import { h, substituir, notificar } from '../dom.js';
 import { api } from '../api.js';
 import { estado, atualizar } from '../estado.js';
 import { tabelaMapeamento, tabelaPrevia } from './mapeamento.js';
+import { avisoMesEnviado } from './avisoMes.js';
 
 const NOMES_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const COLUNAS_MODELO = [
@@ -142,6 +143,7 @@ export function montarImportar(painel, irPara) {
           h('h2', { class: 'cartao__titulo' }, `Importar relatórios de ${rotuloPeriodo(estado.periodo)}`),
           h('a', { class: 'botao', href: '/api/modelo.xlsx', download: true, id: 'baixar-modelo' }, 'Baixar planilha modelo')),
         h('p', { class: 'texto-suave' }, 'O mês vem do calendário no topo. Nada é enviado ao Hourglass nesta etapa.'),
+        avisoMesEnviado(),
         zonaArquivo(arquivo?.name, enviarArquivo),
         h('div', { class: 'linha-acoes' }, h('button', { class: 'botao', onClick: abrirSalva }, 'Abrir conferência já salva deste mês')),
         !estado.sessao?.valida ? h('div', { class: 'aviso aviso--alerta espaco-topo' }, 'Conecte a sessão na etapa 1 para poder processar.') : null),

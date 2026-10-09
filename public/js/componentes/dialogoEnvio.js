@@ -50,14 +50,14 @@ export function mostrarProgresso({ dialogo, corpo, areaRodape }) {
   substituir(areaRodape, h('span', { class: 'texto-suave' }, 'Não feche esta janela até terminar.'));
 
   return {
-    progresso({ feitos, total, nome, ok, erro }) {
+    progresso({ feitos, total, nome, ok, erro, jaExistia }) {
       barra.style.width = `${Math.round((feitos / total) * 100)}%`;
       contador.textContent = `${feitos} de ${total}`;
-      log.prepend(h('li', { class: ok ? '' : 'celula-alertas__item--erro' }, ok ? `✔ ${nome}` : `✖ ${nome}: ${erro}`));
+      log.prepend(h('li', { class: ok ? '' : 'celula-alertas__item--erro' }, jaExistia ? `↺ ${nome} — já estava no Hourglass` : ok ? `✔ ${nome}` : `✖ ${nome}: ${erro}`));
     },
-    concluir({ enviados, falhas }, aoFechar) {
+    concluir({ enviados, falhas, jaExistiam }, aoFechar) {
       barra.style.width = '100%';
-      contador.textContent = `Concluído: ${enviados} enviados${falhas ? `, ${falhas} falharam` : ''}.`;
+      contador.textContent = `Concluído: ${enviados} enviados${jaExistiam ? `, ${jaExistiam} já estavam no Hourglass` : ''}${falhas ? `, ${falhas} falharam` : ''}.`;
       const botao = h('button', { class: 'botao botao--primario', id: 'botao-ver-faltantes' }, 'Ver faltantes');
       botao.addEventListener('click', aoFechar);
       substituir(areaRodape, botao);

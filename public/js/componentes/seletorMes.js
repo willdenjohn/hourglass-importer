@@ -15,6 +15,7 @@ function deRotulo(rotulo) {
 export function montarSeletorMes(alvo, aoEscolher) {
   let selecionado = null;
   let emAberto = null;
+  let ultimoEnviado = null;
   let anoVisivel = new Date().getFullYear();
   let aberto = false;
 
@@ -44,10 +45,13 @@ export function montarSeletorMes(alvo, aoEscolher) {
     const classes = ['calendario__mes'];
     if (selecionado && indice(periodo) === indice(selecionado)) classes.push('calendario__mes--selecionado');
     if (emAberto && indice(periodo) === indice(emAberto)) classes.push('calendario__mes--aberto');
+    const enviado = ultimoEnviado && indice(periodo) <= indice(ultimoEnviado);
+    if (enviado) classes.push('calendario__mes--enviado');
     return h('button', {
       class: classes.join(' '), type: 'button', role: 'gridcell',
       disabled: !permitido(periodo),
-      'aria-label': `${MESES[numero - 1]} de ${anoVisivel}`,
+      'aria-label': `${MESES[numero - 1]} de ${anoVisivel}${enviado ? ' (já enviado à filial)' : ''}`,
+      title: enviado ? 'Já enviado à filial' : null,
       onClick: () => escolher(periodo),
     }, MESES_CURTOS[numero - 1]);
   }
@@ -61,7 +65,9 @@ export function montarSeletorMes(alvo, aoEscolher) {
         h('button', { class: 'calendario__seta', type: 'button', 'aria-label': 'Próximo ano', disabled: proximoAnoBloqueado, onClick: () => { anoVisivel++; render(); } }, '›')),
       h('div', { class: 'calendario__grade', role: 'grid' }, MESES.map((_, i) => botaoMes(i + 1))),
       emAberto ? h('div', { class: 'calendario__rodape' },
-        h('span', { class: 'calendario__legenda' }, h('span', { class: 'calendario__ponto' }), 'Mês em aberto no Hourglass'),
+        h('div', {},
+          h('span', { class: 'calendario__legenda' }, h('span', { class: 'calendario__ponto' }), 'Mês em aberto no Hourglass'),
+          ultimoEnviado ? h('span', { class: 'calendario__legenda' }, h('span', { class: 'calendario__risco' }), 'Já enviado à filial') : null),
         h('button', { class: 'botao botao--pequeno', type: 'button', onClick: () => escolher(emAberto) }, 'Ir para ele')) : null);
   }
 
@@ -99,6 +105,10 @@ export function montarSeletorMes(alvo, aoEscolher) {
     },
     definirMesEmAberto(rotulo) {
       emAberto = deRotulo(rotulo);
+      render();
+    },
+    definirUltimoEnviado(rotulo) {
+      ultimoEnviado = deRotulo(rotulo);
       render();
     },
   };

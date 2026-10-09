@@ -28,3 +28,10 @@ export function observar(ouvinte) {
 
 export const SITUACOES = ['ENVIAR', 'REVISAR', 'NÃO ENCONTRADO', 'JÁ LANÇADO', 'IGNORAR'];
 export const LIMITE_COM_CREDITO = 55;
+
+export function mesJaEnviado({ periodo, sessao }) {
+  const ultimo = sessao?.conta?.ultimoMesEnviado;
+  if (!ultimo) return false;
+  const [ano, mes] = ultimo.split('-').map(Number);
+  return periodo.ano * 12 + periodo.mes <= ano * 12 + mes;
+}

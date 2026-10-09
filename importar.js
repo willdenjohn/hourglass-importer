@@ -10,7 +10,7 @@ const { criarCliente } = require('./lib/api');
 const { escreverConferencia, lerConferencia } = require('./lib/conferencia');
 const { carregarSessao } = require('./lib/sessao');
 const { levantarFaltantes, imprimirFaltantes, salvarFaltantes } = require('./lib/faltantes');
-const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio } = require('./lib/servico');
+const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, comTrava } = require('./lib/servico');
 
 const ARQUIVOS = caminhos(__dirname);
 
@@ -94,7 +94,8 @@ async function enviar(arquivo, executar, limite) {
     return;
   }
 
-  const resultados = await enviarRelatorios(cliente, pendentes, r => console.log(r.ok ? `  [OK] ${r.nome}` : `  [FALHA] ${r.nome}: ${r.erro}`));
+  const mostrar = r => console.log(r.jaExistia ? `  [JÁ EXISTIA] ${r.nome}` : r.ok ? `  [OK] ${r.nome}` : `  [FALHA] ${r.nome}: ${r.erro}`);
+  const resultados = await comTrava(__dirname, () => enviarRelatorios(cliente, pendentes, mostrar));
   console.log(`\nEnviados: ${resultados.filter(r => r.ok).length}/${pendentes.length}`);
   await relatorioFaltantes(cliente);
 }
