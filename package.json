@@ -5,7 +5,7 @@
   "type": "commonjs",
   "private": true,
   "scripts": {
-    "start": "node servidor.js",
+    "start": "node servidor.js --abrir",
     "importar": "node importar.js"
   },
   "engines": {

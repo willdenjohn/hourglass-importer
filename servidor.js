@@ -1,6 +1,7 @@
 'use strict';
 
 const http = require('http');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const formulario = require('./lib/formulario');
@@ -10,7 +11,7 @@ const { criarCliente: criarClienteReal } = require('./lib/api');
 const { escreverConferencia, lerConferencia } = require('./lib/conferencia');
 const { carregarSessao, salvarSessao, normalizarSessao, sessaoPreenchida, expiracao } = require('./lib/sessao');
 const { levantarFaltantes, salvarFaltantes, mensagemGeral } = require('./lib/faltantes');
-const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, salvarApelido, marcarEnviados, comTrava } = require('./lib/servico');
+const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, salvarApelido, marcarEnviados, comTrava, criarRegistro } = require('./lib/servico');
 
 const PORTA = Number(process.env.PORTA) || 3434;
 const PASTA_PUBLICA = path.join(__dirname, 'public');
@@ -18,6 +19,8 @@ const TIPOS = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=
 const TIPO_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const MAXIMO_PLANILHAS = 5;
 const EXEMPLOS_POR_COLUNA = 3;
+const TAMANHO_MAXIMO = 10 * 1024 * 1024;
+const VALIDADE_CACHE = 5 * 60 * 1000;
 
 class ErroHttp extends Error {
   constructor(status, mensagem) {
@@ -29,7 +32,16 @@ class ErroHttp extends Error {
 function lerCorpo(req) {
   return new Promise((resolve, reject) => {
     const partes = [];
-    req.on('data', parte => partes.push(parte));
+    let tamanho = 0;
+    req.on('data', parte => {
+      tamanho += parte.length;
+      if (tamanho > TAMANHO_MAXIMO) {
+        req.destroy();
+        reject(new ErroHttp(413, 'Arquivo grande demais (máximo 10 MB).'));
+        return;
+      }
+      partes.push(parte);
+    });
     req.on('end', () => resolve(Buffer.concat(partes)));
     req.on('error', reject);
   });
@@ -37,7 +49,12 @@ function lerCorpo(req) {
 
 async function lerJson(req) {
   const corpo = await lerCorpo(req);
-  return corpo.length ? JSON.parse(corpo.toString('utf8')) : {};
+  if (!corpo.length) return {};
+  try {
+    return JSON.parse(corpo.toString('utf8'));
+  } catch {
+    throw new ErroHttp(400, 'Dados inválidos enviados ao servidor.');
+  }
 }
 
 function responderJson(res, dados, status = 200) {
@@ -111,10 +128,22 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
     return planilha;
   }
 
+  let emCache = null;
+
+  function clienteDaSessao(sessao) {
+    const valido = emCache && emCache.token === sessao.hglogin && Date.now() - emCache.criadoEm < VALIDADE_CACHE;
+    if (!valido) emCache = { token: sessao.hglogin, criadoEm: Date.now(), cliente: criarCliente(sessao) };
+    return emCache.cliente;
+  }
+
+  function descartarCache() {
+    emCache = null;
+  }
+
   function cliente() {
     const sessao = carregarSessao(pasta);
     if (!sessao) throw new ErroHttp(401, 'Sessão não configurada. Cole os cookies na etapa 1.');
-    return criarCliente(sessao);
+    return clienteDaSessao(sessao);
   }
 
   async function estadoSessao() {
@@ -122,9 +151,10 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
     if (!sessao) return { configurada: false };
     const expira = expiracao(sessao.hglogin);
     try {
-      const conta = await criarCliente(sessao).conta();
+      const conta = await clienteDaSessao(sessao).conta();
       return { configurada: true, valida: true, expira, publicadores: conta.publicadores, conta };
     } catch (erro) {
+      descartarCache();
       return { configurada: true, valida: false, expira, erro: erro.message };
     }
   }
@@ -245,7 +275,8 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
         res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
         const escrever = dados => res.write(JSON.stringify(dados) + '\n');
         escrever({ tipo: 'inicio', total: pendentes.length });
-        const resultados = await enviarRelatorios(api, pendentes, (resultado, feitos, total) => escrever({ tipo: 'progresso', feitos, total, ...resultado }));
+        const registrar = criarRegistro(arquivos.registro(mes, ano), 'interface');
+        const resultados = await enviarRelatorios(api, pendentes, (resultado, feitos, total) => escrever({ tipo: 'progresso', feitos, total, ...resultado }), registrar);
         const jaNoHourglass = jaExistentes.map(p => ({ id: p.relatorio.user.id, ok: true }));
         escreverConferencia(arquivos.conferencia(mes, ano), marcarEnviados(itens, [...resultados, ...jaNoHourglass]));
         escrever({
@@ -288,20 +319,36 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
       if (req.method === 'GET') return servirEstatico(res, url.pathname);
       throw new ErroHttp(404, 'Rota não encontrada.');
     } catch (erro) {
+      if (erro.status === 401) descartarCache();
       if (res.headersSent) return res.end();
       responderJson(res, { erro: erro.message }, erro.status ?? 500);
     }
   };
 }
 
-function iniciar(opcoes) {
+function abrirNavegador(endereco) {
+  const comandos = { win32: ['cmd', ['/c', 'start', '', endereco]], darwin: ['open', [endereco]] };
+  const [programa, argumentos] = comandos[process.platform] ?? ['xdg-open', [endereco]];
+  spawn(programa, argumentos, { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
+}
+
+function iniciar(opcoes = {}) {
+  const porta = opcoes.porta ?? PORTA;
+  const endereco = `http://localhost:${porta}`;
   const servidor = http.createServer(criarAplicacao(opcoes));
-  servidor.listen(opcoes?.porta ?? PORTA, '127.0.0.1', () => {
-    process.stdout.write(`Importador Hourglass rodando em http://localhost:${servidor.address().port}\n`);
+  servidor.on('error', erro => {
+    if (erro.code !== 'EADDRINUSE') throw erro;
+    process.stdout.write(`O importador já está aberto em ${endereco} (ou a porta ${porta} está em uso por outro programa).\n`);
+    if (opcoes.abrir) abrirNavegador(endereco);
+    process.exitCode = 1;
+  });
+  servidor.listen(porta, '127.0.0.1', () => {
+    process.stdout.write(`Importador Hourglass rodando em ${endereco}\nPara encerrar, feche esta janela ou aperte Ctrl+C.\n`);
+    if (opcoes.abrir) abrirNavegador(endereco);
   });
   return servidor;
 }
 
-if (require.main === module) iniciar();
+if (require.main === module) iniciar({ abrir: process.argv.includes('--abrir') });
 
 module.exports = { criarAplicacao, iniciar };

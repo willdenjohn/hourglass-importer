@@ -10,7 +10,7 @@ const { criarCliente } = require('./lib/api');
 const { escreverConferencia, lerConferencia } = require('./lib/conferencia');
 const { carregarSessao } = require('./lib/sessao');
 const { levantarFaltantes, imprimirFaltantes, salvarFaltantes } = require('./lib/faltantes');
-const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, comTrava } = require('./lib/servico');
+const { caminhos, resumir, prepararConferencia, validarEnvio, enviarRelatorios, descreverRelatorio, comTrava, criarRegistro, marcarEnviados } = require('./lib/servico');
 
 const ARQUIVOS = caminhos(__dirname);
 
@@ -95,8 +95,11 @@ async function enviar(arquivo, executar, limite) {
   }
 
   const mostrar = r => console.log(r.jaExistia ? `  [JÁ EXISTIA] ${r.nome}` : r.ok ? `  [OK] ${r.nome}` : `  [FALHA] ${r.nome}: ${r.erro}`);
-  const resultados = await comTrava(__dirname, () => enviarRelatorios(cliente, pendentes, mostrar));
-  console.log(`\nEnviados: ${resultados.filter(r => r.ok).length}/${pendentes.length}`);
+  const registrar = criarRegistro(ARQUIVOS.registro(mes, ano), 'linha de comando');
+  const resultados = await comTrava(__dirname, () => enviarRelatorios(cliente, pendentes, mostrar, registrar));
+  const jaNoHourglass = jaExistentes.map(p => ({ id: p.relatorio.user.id, ok: true }));
+  escreverConferencia(arquivo, marcarEnviados(lerConferencia(arquivo), [...resultados, ...jaNoHourglass]));
+  console.log(`\nEnviados: ${resultados.filter(r => r.ok && !r.jaExistia).length}/${pendentes.length} — conferência atualizada.`);
   await relatorioFaltantes(cliente);
 }
 
