@@ -6,6 +6,9 @@ export const estado = {
   publicadores: [],
   itens: [],
   semResposta: [],
+  extensao: { presente: false, ativa: false },
+  sincronizandoExtensao: false,
+  resultadoExtensao: null,
 };
 
 function periodoPadrao() {

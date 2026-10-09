@@ -34,8 +34,8 @@ npm start
 
 Abra `http://localhost:3434`. No Windows, também é possível dar duplo clique em `iniciar.bat`.
 
-1. **Sessão** — cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão, mostra até quando o login vale e preenche os dados da conta vindos do Hourglass: usuário, congregação, mês em aberto, último mês enviado à filial, grupos e permissões. O mês em aberto passa a ser o mês padrão da importação.
-2. **Importar Forms** — escolha o mês no topo, arraste o Excel do Forms e clique em *Processar*. Nesta etapa nada é enviado.
+1. **Sessão** — com a [extensão do Chrome](#extensão-do-chrome) instalada, a conexão é automática. Sem ela, cole os cookies `hglogin` e `X-Hourglass-XSRF-Token` do Hourglass (no navegador logado: F12 → Application → Cookies → `https://app.hourglass-app.com`). O app testa a conexão, mostra até quando o login vale e preenche os dados da conta vindos do Hourglass: usuário, congregação, mês em aberto, último mês enviado à filial, grupos e permissões. O mês em aberto passa a ser o mês padrão da importação.
+2. **Importar Forms** — escolha o mês no calendário do topo (o mês em aberto no Hourglass vem marcado com um ponto verde; meses posteriores ficam bloqueados), arraste o Excel do Forms e clique em *Processar*. Nesta etapa nada é enviado.
 3. **Conferência e envio** — revise as linhas:
    - verde `ENVIAR`: pronto para envio;
    - amarelo `REVISAR`: algo precisa de confirmação (veja a coluna *Alertas*);
@@ -44,6 +44,30 @@ Abra `http://localhost:3434`. No Windows, também é possível dar duplo clique 
 
    Edições são salvas automaticamente. Ao escolher manualmente um publicador, use *Lembrar este nome* para que o apelido seja reconhecido nos próximos meses. Clique em *Simular envio*, confira a lista e digite `ENVIAR` para confirmar.
 4. **Faltantes** — consulta o Hourglass e mostra quem ainda não entregou o relatório do mês em aberto, com totais, lista por grupo, mensagem pronta para copiar e download em Excel.
+
+## Extensão do Chrome
+
+A pasta `extensao/` contém uma extensão que entrega a sessão do Hourglass ao importador automaticamente, sem copiar cookies.
+
+**Instalação (uma vez):**
+
+1. Abra `chrome://extensions` e ligue o **Modo do desenvolvedor**.
+2. Clique em **Carregar sem compactação** e escolha a pasta `extensao/`.
+3. Fixe o ícone da ampulheta na barra do Chrome.
+
+**Como funciona:**
+
+- Só age quando a página do importador (`localhost:3434`) é aberta e a sessão está ausente ou expirada, quando uma consulta ao Hourglass falha por sessão expirada (a consulta é refeita sozinha) ou quando você clica em *Conectar pelo Chrome* / *Sincronizar agora*. Não fica monitorando nada em segundo plano.
+- Lê apenas os cookies de `app.hourglass-app.com` e envia apenas para `localhost:3434`.
+- O ícone mostra **ON** ou **OFF**. O popup mostra se o Hourglass está logado neste Chrome, se o importador está aberto e conectado, e o resultado da última sincronização.
+- O botão **Desativar** desliga a extensão: ela deixa de ler cookies até ser ativada de novo. A página do importador mostra o estado da extensão na aba *Sessão*.
+
+É preciso estar logado no Hourglass neste mesmo Chrome.
+
+## Segurança
+
+- O servidor escuta apenas em `127.0.0.1` e recusa requisições cujo `Host` não seja `localhost` ou `127.0.0.1`.
+- Gravações (`POST`/`PUT`) só são aceitas da própria página do importador ou da extensão; outros sites abertos no navegador não conseguem alterar a sessão nem os dados.
 
 ## Uso pela linha de comando
 
@@ -113,6 +137,7 @@ lib/
   faltantes.js         relatório de faltantes e mensagem
   sessao.js            leitura e validação da sessão
 public/                interface web (HTML, CSS e JavaScript sem dependências)
+extensao/              extensão do Chrome para a sessão automática
 ```
 
 ## API do Hourglass utilizada

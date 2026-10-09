@@ -40,6 +40,32 @@ function detalhesConta(conta) {
       marcador(conta.permissoes.verResumo, 'Ver resumos e faltantes')));
 }
 
+function textoExtensao(extensao) {
+  if (!extensao.presente) return ['Não instalada', 'selo'];
+  return extensao.ativa ? ['Ativa', 'selo selo--sucesso'] : ['Desativada', 'selo selo--alerta'];
+}
+
+function cartaoExtensao(conectar) {
+  const { extensao, sincronizandoExtensao, resultadoExtensao } = estado;
+  const [rotulo, classe] = textoExtensao(extensao);
+  const resultado = resultadoExtensao && h('div', { class: `aviso ${resultadoExtensao.ok ? 'aviso--sucesso' : 'aviso--alerta'}` }, resultadoExtensao.mensagem);
+  const botao = h('button', {
+    class: 'botao botao--primario', id: 'botao-conectar-extensao',
+    disabled: !extensao.ativa || sincronizandoExtensao,
+    onClick: () => conectar(true),
+  }, sincronizandoExtensao ? 'Conectando…' : 'Conectar pelo Chrome');
+
+  return h('div', { class: 'cartao', id: 'cartao-extensao' },
+    h('div', { class: 'grupo__cabecalho' },
+      h('h3', { class: 'cartao__titulo' }, 'Extensão do Chrome'),
+      h('span', { class: classe, id: 'selo-extensao' }, rotulo)),
+    h('p', { class: 'texto-suave' }, extensao.presente
+      ? 'Quando a sessão falta ou expira, a extensão envia o login do Hourglass deste Chrome automaticamente. Para ligar ou desligar, use o ícone da ampulheta na barra do Chrome.'
+      : 'Instale a extensão (pasta extensao/, veja o README) para conectar sem copiar cookies.'),
+    resultado,
+    extensao.presente ? h('div', { class: 'linha-acoes' }, botao) : null);
+}
+
 function instrucoes() {
   return h('ol', { class: 'lista-simples texto-suave' },
     h('li', {}, 'Abra o Hourglass logado no navegador e aperte F12.'),
@@ -70,7 +96,7 @@ function formulario(aoSalvar) {
     h('div', { class: 'linha-acoes' }, botao));
 }
 
-export function montarSessao(painel) {
+export function montarSessao(painel, conectarPelaExtensao) {
   async function salvar(dados) {
     try {
       const sessao = await api.salvarSessao(dados);
@@ -87,8 +113,9 @@ export function montarSessao(painel) {
         h('h2', { class: 'cartao__titulo' }, 'Sessão do Hourglass'),
         situacaoSessao(estado.sessao)),
       detalhesConta(estado.sessao?.valida ? estado.sessao.conta : null),
-      h('div', { class: 'cartao' },
-        h('h3', { class: 'cartao__titulo' }, estado.sessao?.valida ? 'Trocar sessão' : 'Conectar'),
+      cartaoExtensao(conectarPelaExtensao),
+      h('details', { class: 'cartao', id: 'cartao-manual', open: !estado.extensao.presente && !estado.sessao?.valida },
+        h('summary', { class: 'cartao__titulo' }, estado.sessao?.valida ? 'Trocar sessão manualmente' : 'Conectar manualmente'),
         instrucoes(),
         formulario(salvar),
         h('p', { class: 'texto-suave' }, 'Os cookies ficam salvos apenas neste computador (sessao.json) e dão acesso à sua conta. Não compartilhe.')));

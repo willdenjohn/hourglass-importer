@@ -244,3 +244,74 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .cartao { padding: var(--espaco-4); }
   .topo__direita { margin-left: 0; width: 100%; }
 }
+
+.calendario { position: relative; display: inline-flex; align-items: stretch; border: 1px solid var(--cor-borda); border-radius: var(--raio-md); background: var(--cor-superficie); }
+
+.calendario__seta {
+  border: 0;
+  background: none;
+  padding: 0 var(--espaco-3);
+  font-size: var(--texto-lg);
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+  border-radius: var(--raio-sm);
+}
+
+.calendario__seta:hover:not(:disabled) { background: var(--cor-superficie-2); color: var(--cor-primaria); }
+.calendario__seta:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.calendario__atual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 150px;
+  padding: var(--espaco-1) var(--espaco-3);
+  border: 0;
+  border-inline: 1px solid var(--cor-borda);
+  background: none;
+  cursor: pointer;
+}
+
+.calendario__atual:hover, .calendario__atual[aria-expanded="true"] { background: var(--cor-primaria-suave); }
+.calendario__rotulo { font-size: var(--texto-xs); color: var(--cor-texto-suave); text-transform: uppercase; letter-spacing: 0.04em; }
+.calendario__valor { display: inline-flex; align-items: center; gap: var(--espaco-2); font-weight: 700; color: var(--cor-texto); }
+
+.calendario__ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--cor-sucesso); flex: none; }
+
+.calendario__painel {
+  position: absolute;
+  top: calc(100% + var(--espaco-2));
+  right: 0;
+  z-index: 20;
+  width: 280px;
+  padding: var(--espaco-3);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+  box-shadow: 0 8px 24px rgb(16 24 40 / 18%);
+}
+
+.calendario__cabecalho { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--espaco-3); }
+.calendario__grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--espaco-2); }
+
+.calendario__mes {
+  position: relative;
+  padding: var(--espaco-2) 0;
+  border: 1px solid transparent;
+  border-radius: var(--raio-sm);
+  background: var(--cor-superficie-2);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.calendario__mes:hover:not(:disabled) { border-color: var(--cor-primaria); color: var(--cor-primaria); }
+.calendario__mes:disabled { opacity: 0.35; cursor: not-allowed; }
+.calendario__mes--selecionado, .calendario__mes--selecionado:hover:not(:disabled) { background: var(--cor-primaria); border-color: var(--cor-primaria); color: var(--cor-primaria-texto); }
+.calendario__mes--aberto::after { content: ""; position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--cor-sucesso); }
+
+.calendario__rodape { display: flex; justify-content: space-between; align-items: center; gap: var(--espaco-2); margin-top: var(--espaco-3); padding-top: var(--espaco-3); border-top: 1px solid var(--cor-borda); }
+.calendario__legenda { display: inline-flex; align-items: center; gap: var(--espaco-2); font-size: var(--texto-xs); color: var(--cor-texto-suave); }
+
+@media (max-width: 640px) {
+  .calendario__painel { left: 0; right: auto; }
+}

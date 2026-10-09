@@ -1,7 +1,15 @@
-async function requisitar(caminho, opcoes = {}) {
+let renovarSessao = null;
+
+export function definirRenovacaoDeSessao(funcao) {
+  renovarSessao = funcao;
+}
+
+async function requisitar(caminho, opcoes = {}, tentativa = 1) {
   const resposta = await fetch(caminho, opcoes);
   const tipo = resposta.headers.get('content-type') || '';
   const dados = tipo.includes('application/json') ? await resposta.json() : null;
+  const podeRenovar = resposta.status === 401 && caminho !== '/api/sessao' && tentativa === 1 && renovarSessao;
+  if (podeRenovar && await renovarSessao()) return requisitar(caminho, opcoes, 2);
   if (!resposta.ok) throw new Error(dados?.erro || `Erro ${resposta.status}`);
   return dados;
 }

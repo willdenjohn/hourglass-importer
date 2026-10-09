@@ -58,6 +58,17 @@ function servirEstatico(res, rota) {
   fs.createReadStream(caminho).pipe(res);
 }
 
+const HOST_LOCAL = /^(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+function origemPermitida(req) {
+  if (!HOST_LOCAL.test(req.headers.host ?? '')) return false;
+  const origem = req.headers.origin;
+  if (!origem || req.method === 'GET') return true;
+  if (origem.startsWith('chrome-extension://')) return true;
+  const host = req.headers.host;
+  return origem === `http://${host}`;
+}
+
 function periodo(url) {
   const mes = Number(url.searchParams.get('mes'));
   const ano = Number(url.searchParams.get('ano'));
@@ -196,6 +207,7 @@ function criarAplicacao({ pasta = __dirname, criarCliente = criarClienteReal } =
     const url = new URL(req.url, 'http://localhost');
     const rota = rotas[`${req.method} ${url.pathname}`];
     try {
+      if (!origemPermitida(req)) throw new ErroHttp(403, 'Origem não permitida.');
       if (rota) return await rota(req, res, url);
       if (req.method === 'GET') return servirEstatico(res, url.pathname);
       throw new ErroHttp(404, 'Rota não encontrada.');
